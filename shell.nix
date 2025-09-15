@@ -10,6 +10,9 @@ buildInputs = [
     docker
     trivy
 		stdenv.cc.cc
+		libpcap
+		docker-credential-helpers
+		dbus
 ];
 
 SOURCE_DATE_EPOCH = 315532800;

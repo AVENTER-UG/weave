@@ -30,7 +30,7 @@ The following topics are discussed:
 blocked by your firewall: TCP 6783 and UDP 6783/6784.
 For more details, see the [FAQ]({{ '/faq#ports' | relative_url }}).*
 
-[Weave Net](https://github.com/rajch/weave/releases) can be installed onto your CNI-enabled Kubernetes cluster with a single command:
+[Weave Net](https://github.com/AVENTER-UG/weave/releases) can be installed onto your CNI-enabled Kubernetes cluster with a single command:
 
 ```
 $ kubectl apply -f https://reweave.azurewebsites.net/k8s/v1.29/net.yaml
@@ -416,7 +416,7 @@ The following documents a problem in Weave Net before version 2.8.2. The problem
 
 #### Manually editing the YAML file
 
-You can manually edit the YAML file downloaded from our [releases page](https://github.com/rajch/weave/releases), 
+You can manually edit the YAML file downloaded from our [releases page](https://github.com/AVENTER-UG/weave/releases), 
 
 For example,
 - additional arguments may be supplied to the Weave router process by adding them to the `command:` array in the YAML file,

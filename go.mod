@@ -1,4 +1,4 @@
-module github.com/rajch/weave
+module github.com/AVENTER-UG/weave
 
 go 1.23.1
 

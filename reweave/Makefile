@@ -38,6 +38,7 @@ publish-plugin:
 
 .PHONY: publish
 publish: publish-images publish-plugin
+	@docker buildx create --use --name buildkit
 
 .PHONY: clean-images
 clean-images:

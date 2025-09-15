@@ -24,7 +24,7 @@ Check the version of Weave Net you are running using:
     weave version
 
 If it is not the latest version, as shown in the list of
-[releases](https://github.com/rajch/weave/releases), then it is
+[releases](https://github.com/AVENTER-UG/weave/releases), then it is
 recommended you upgrade using the
 [installation instructions]({{ '/install/installing-weave' | relative_url }}).
 

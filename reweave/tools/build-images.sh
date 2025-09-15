@@ -60,7 +60,6 @@ build_image() {
     docker buildx build \
             ${POSTBUILD} \
             --progress=plain \
-            --platform=${PLATFORMS} \
             --target="$1" \
             --build-arg=ALPINE_BASEIMAGE=${ALPINE_BASEIMAGE} \
             --build-arg=WEAVE_VERSION=${WEAVE_VERSION} \

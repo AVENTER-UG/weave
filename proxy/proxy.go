@@ -18,9 +18,9 @@ import (
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/pkg/errors"
 
-	weaveapi "github.com/rajch/weave/api"
-	weavedocker "github.com/rajch/weave/common/docker"
-	weavenet "github.com/rajch/weave/net"
+	weaveapi "github.com/AVENTER-UG/weave/api"
+	weavedocker "github.com/AVENTER-UG/weave/common/docker"
+	weavenet "github.com/AVENTER-UG/weave/net"
 )
 
 const (

@@ -5,7 +5,7 @@ search_type: Documentation
 ---
 Weave Net was the first product created by Weaveworks. It was and still is a popular choice for container networking, especially as a CNI add-on for Kubernetes.
 
-Weave Net is now a community-supported project, run out of the forked GitHub repository [rajch/weave](https://github.com/rajch/weave).
+Weave Net is now a community-supported project, run out of the forked GitHub repository [rajch/weave](https://github.com/AVENTER-UG/weave).
 
 ## Using Weave with Kubernetes
 
@@ -28,7 +28,7 @@ kubectl apply -f https://reweave.azurewebsites.net/k8s/net?k8s-version=$KUBEVER
 Finally, you can directly apply the manifest from our releases page:
 
 ```bash
-kubectl apply -f https://github.com/rajch/weave/releases/latest/download/weave-daemonset-k8s-1.11.yaml
+kubectl apply -f https://github.com/AVENTER-UG/weave/releases/latest/download/weave-daemonset-k8s-1.11.yaml
 ```
 
 More details, and options can be found on the [Integrating Kubernetes via the Addon]({{ '/kubernetes/kube-addon' | relative_url }}) page.

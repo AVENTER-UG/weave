@@ -5,9 +5,9 @@ import (
 
 	"github.com/weaveworks/mesh"
 
-	"github.com/rajch/weave/api"
-	"github.com/rajch/weave/common"
-	"github.com/rajch/weave/net/address"
+	"github.com/AVENTER-UG/weave/api"
+	"github.com/AVENTER-UG/weave/common"
+	"github.com/AVENTER-UG/weave/net/address"
 )
 
 type claim struct {

@@ -16,7 +16,7 @@ later).
     now maintained by the community, and one of the first things that
     changed in this model was the build process. The new process is
     still being fine-tuned, and will be documented here once done. In
-    the meantime, you can look at [https://github.com/rajch/weave/blob/master/reweave/BUILDING.md](https://github.com/rajch/weave/blob/master/reweave/BUILDING.md) 
+    the meantime, you can look at [https://github.com/AVENTER-UG/weave/blob/master/reweave/BUILDING.md](https://github.com/AVENTER-UG/weave/blob/master/reweave/BUILDING.md) 
     to see the current state of the process.
 
     The current documentation is being kept in for now, until it can be replaced.

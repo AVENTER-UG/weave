@@ -3,8 +3,8 @@ package ipam
 import (
 	"fmt"
 
-	"github.com/rajch/weave/api"
-	"github.com/rajch/weave/net/address"
+	"github.com/AVENTER-UG/weave/api"
+	"github.com/AVENTER-UG/weave/net/address"
 )
 
 type allocateResult struct {

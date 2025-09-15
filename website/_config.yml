@@ -25,7 +25,7 @@ title: Weave Net
 #   line in _config.yml. It will appear in your document head meta (for
 #   Google search results) and in your feed.xml site description.
 baseurl: "/weave" # the subpath of your site, e.g. /blog
-url: "https://rajch.github.io" # the base hostname & protocol for your site, e.g. http://example.com
+url: "https://aventer-ug.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 # twitter_username: jekyllrb
 # github_username:  jekyll
 

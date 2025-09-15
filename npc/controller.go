@@ -12,10 +12,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/rajch/weave/common"
-	"github.com/rajch/weave/common/chains"
-	"github.com/rajch/weave/net/ipset"
-	"github.com/rajch/weave/npc/iptables"
+	"github.com/AVENTER-UG/weave/common"
+	"github.com/AVENTER-UG/weave/common/chains"
+	"github.com/AVENTER-UG/weave/net/ipset"
+	"github.com/AVENTER-UG/weave/npc/iptables"
 )
 
 type NetworkPolicyController interface {

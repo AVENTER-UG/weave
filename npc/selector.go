@@ -6,8 +6,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
-	"github.com/rajch/weave/common"
-	"github.com/rajch/weave/net/ipset"
+	"github.com/AVENTER-UG/weave/common"
+	"github.com/AVENTER-UG/weave/net/ipset"
 )
 
 type selectorSpec struct {

@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/rajch/weave/common"
+	"github.com/AVENTER-UG/weave/common"
 )
 
 const (

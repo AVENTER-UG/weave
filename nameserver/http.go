@@ -9,8 +9,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/miekg/dns"
 
-	"github.com/rajch/weave/common/docker"
-	"github.com/rajch/weave/net/address"
+	"github.com/AVENTER-UG/weave/common/docker"
+	"github.com/AVENTER-UG/weave/net/address"
 )
 
 func (n *Nameserver) badRequest(w http.ResponseWriter, err error) {

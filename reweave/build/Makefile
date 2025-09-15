@@ -15,7 +15,7 @@ BUILDARCH?=amd64
 # debian buster repository does not host binaries for libpcap-0.8
 # on those architectures any more.
 # ALL_ARCHITECTURES=amd64 arm arm64 ppc64le s390x
-ALL_ARCHITECTURES=amd64 arm arm64
+ALL_ARCHITECTURES=amd64
 
 # We need the Debian platform architecture format, for
 # crosscompilation

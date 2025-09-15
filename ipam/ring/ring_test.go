@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/weaveworks/mesh"
 
-	"github.com/rajch/weave/common"
-	"github.com/rajch/weave/net/address"
+	"github.com/AVENTER-UG/weave/common"
+	"github.com/AVENTER-UG/weave/net/address"
 )
 
 var (

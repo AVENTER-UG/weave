@@ -3,8 +3,8 @@ package ipam
 import (
 	"fmt"
 
-	"github.com/rajch/weave/ipam/paxos"
-	"github.com/rajch/weave/net/address"
+	"github.com/AVENTER-UG/weave/ipam/paxos"
+	"github.com/AVENTER-UG/weave/net/address"
 )
 
 type Status struct {

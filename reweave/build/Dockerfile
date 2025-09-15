@@ -114,15 +114,15 @@ LABEL works.weave.role="system" \
       maintainer="Raj Chaudhuri <raj@rajware.net>" \
       org.opencontainers.image.title="Weave Net" \
       org.opencontainers.image.description="Weave Net creates a virtual network that connects Docker containers across multiple hosts and enables their automatic discovery" \
-      org.opencontainers.image.url="https://github.com/rajch/weave" \
-      org.opencontainers.image.source="https://github.com/rajch/weave" \
-      org.opencontainers.image.vendor="Raj Chaudhuri (forked from Weaveworks)" \
+      org.opencontainers.image.url="https://github.com/AVENTER-UG/weave" \
+      org.opencontainers.image.source="https://github.com/AVENTER-UG/weave" \
+      org.opencontainers.image.vendor="AVENTER UG (forked from rajch/Weaveworks)" \
       org.label-schema.schema-version="1.0" \
       org.label-schema.name="Weave Net" \
       org.label-schema.description="Weave Net creates a virtual network that connects Docker containers across multiple hosts and enables their automatic discovery" \
-      org.label-schema.url="https://github.com/rajch/weave" \
-      org.label-schema.vcs-url="https://github.com/rajch/weave" \
-      org.label-schema.vendor="Raj Chaudhuri (forked from Weaveworks)"
+      org.label-schema.url="https://github.com/AVENTER-UG/weave" \
+      org.label-schema.vcs-url="https://github.com/AVENTER-UG/weave" \
+      org.label-schema.vendor="AVENTER UG (forked from rajch/Weaveworks)"
 
 RUN <<EOWEAVER
       apk add --update \
@@ -165,7 +165,7 @@ FROM weaverimage AS weavexecimage
 
 LABEL maintainer="Raj Chaudhuri <raj@rajware.net>" \
       org.opencontainers.image.title="weaveexec" \
-      org.opencontainers.image.source="https://github.com/rajch/weave" \
+      org.opencontainers.image.source="https://github.com/AVENTER-UG/weave" \
       org.opencontainers.image.vendor="Raj Chaudhuri (forked from Weaveworks)"
 
 ENTRYPOINT ["/home/weave/sigproxy", "/home/weave/weave"]
@@ -190,8 +190,8 @@ FROM weaverimage AS weavekubeimage
 
 LABEL maintainer="Raj Chaudhuri <raj@rajware.net>" \
       org.opencontainers.image.title="weave-kube" \
-      org.opencontainers.image.source="https://github.com/rajch/weave" \
-      org.opencontainers.image.vendor="Raj Chaudhuri (forked from Weaveworks)"
+      org.opencontainers.image.source="https://github.com/AVENTER-UG/weave" \
+      org.opencontainers.image.vendor="AVENTER UG (forked from rajch/Weaveworks)"
 
 COPY --from=builder /root/weave/prog/weave-kube/init.sh /root/weave/prog/weave-kube/launch.sh /root/weave/prog/kube-utils/kube-utils /home/weave/
 ENTRYPOINT ["/home/weave/launch.sh"]
@@ -212,15 +212,15 @@ LABEL works.weave.role="system" \
       maintainer="Raj Chaudhuri <raj@rajware.net>" \
       org.opencontainers.image.title="Weave Net" \
       org.opencontainers.image.description="Weave Net creates a virtual network that connects Docker containers across multiple hosts and enables their automatic discovery" \
-      org.opencontainers.image.url="https://github.com/rajch/weave" \
-      org.opencontainers.image.source="https://github.com/rajch/weave" \
-      org.opencontainers.image.vendor="Raj Chaudhuri (forked from Weaveworks)" \
+      org.opencontainers.image.url="https://github.com/AVENTER-UG/weave" \
+      org.opencontainers.image.source="https://github.com/AVENTER-UG/weave" \
+      org.opencontainers.image.vendor="AVENTER UG (forked from rajch/Weaveworks)" \
       org.label-schema.schema-version="1.0" \
       org.label-schema.name="Weave Net" \
       org.label-schema.description="Weave Net creates a virtual network that connects Docker containers across multiple hosts and enables their automatic discovery" \
-      org.label-schema.url="https://github.com/rajch/weave" \
-      org.label-schema.vcs-url="https://github.com/rajch/weave" \
-      org.label-schema.vendor="Raj Chaudhuri (forked from Weaveworks)"
+      org.label-schema.url="https://github.com/AVENTER-UG/weave" \
+      org.label-schema.vcs-url="https://github.com/AVENTER-UG/weave" \
+      org.label-schema.vendor="AVENTER UG (forked from rajch/Weaveworks)"
 
 RUN <<EONPC
       apk add --update \
@@ -263,7 +263,7 @@ FROM scratch AS weavedbimage
 LABEL works.weave.role="system" \
       maintainer="Raj Chaudhuri <raj@rajware.net>" \
       org.opencontainers.image.title="weavedb" \
-      org.opencontainers.image.source="https://github.com/rajch/weave" \
+      org.opencontainers.image.source="https://github.com/AVENTER-UG/weave" \
       org.opencontainers.image.vendor="Raj Chaudhuri (forked from Weaveworks)"
 
 ENTRYPOINT ["data-only"]

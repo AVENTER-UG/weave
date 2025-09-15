@@ -9,10 +9,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/rajch/weave/api"
-	"github.com/rajch/weave/common"
-	"github.com/rajch/weave/net/address"
-	"github.com/rajch/weave/testing/gossip"
+	"github.com/AVENTER-UG/weave/api"
+	"github.com/AVENTER-UG/weave/common"
+	"github.com/AVENTER-UG/weave/net/address"
+	"github.com/AVENTER-UG/weave/testing/gossip"
 )
 
 const (

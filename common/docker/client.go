@@ -8,7 +8,7 @@ import (
 
 	docker "github.com/fsouza/go-dockerclient"
 
-	"github.com/rajch/weave/common"
+	"github.com/AVENTER-UG/weave/common"
 )
 
 const (
