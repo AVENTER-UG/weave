@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/weaveworks/common/logging"
 )
 
 type textFormatter struct {
@@ -38,9 +39,11 @@ var (
 )
 
 var (
-	Log *logrus.Logger
+	Log     *logrus.Logger
+	Logging logging.Interface
 )
 
+// Optionale weitere Methoden (Debugf, Warnf) je nach logging.Interface
 func init() {
 	Log = logrus.New()
 	Log.Formatter = standardTextFormatter

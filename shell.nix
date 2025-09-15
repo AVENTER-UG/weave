@@ -4,7 +4,6 @@ stdenv.mkDerivation {
 name = "go-env";
 
 buildInputs = [
-    go
     syft
     grype
     docker

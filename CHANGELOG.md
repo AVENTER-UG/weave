@@ -1,3 +1,7 @@
+## Release 2.10.1
+
+- Security Updates.
+
 ## Release 2.10.0
 
 - Update base images to debian 12.

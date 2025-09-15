@@ -527,7 +527,7 @@ func main() {
 	go weavenet.MonitorForIptablesFlush(Log, "WEAVE-CANARY", []string{"mangle", "nat", "filter"}, applyIPTables, 10*time.Second, stopChan)
 	defer close(stopChan)
 
-	signals.SignalHandlerLoop(common.Log, router)
+	signals.SignalHandlerLoop(common.Logging, router)
 }
 
 func exposeForAWSVPC(alloc *ipam.Allocator, subnet address.CIDR, bridgeName string, ready func()) {
