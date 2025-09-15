@@ -1,3 +1,8 @@
+## Release 2.10.0
+
+- Update base images to debian 12.
+- Update go modules.
+
 ## Release 2.9.0
 
 This release has upgraded dependencies based on CVE recommendations.

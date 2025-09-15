@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-ARG ALPINE_BASEIMAGE=alpine:3.20.3
+ARG ALPINE_BASEIMAGE=alpine:3.22
 
 ########
 # Stage 1: go 1.23.1 on debian bullseye
@@ -24,9 +24,9 @@ ENV GOARM 7
 # 	ppc64el \
 # 	s390x
 ENV DEB_CROSSPLATFORMS \
-      amd64 \
-	armhf \
-	arm64
+		amd64 \
+		armhf \
+		arm64
 
 # Install the build-essential and crossbuild-essential-ARCH packages
 RUN <<EOCROSSCOMPILERS
@@ -48,10 +48,10 @@ EOCROSSCOMPILERS
 # Install libpcap-dev version 1.8.1-6+deb10u1 for all supported
 # architectures.
 RUN <<EOBUSTERREPOS
-echo "deb http://deb.debian.org/debian/ buster main" > /etc/apt/sources.list.d/busters-repos.list
-echo "deb-src http://deb.debian.org/debian/ buster main" >> /etc/apt/sources.list.d/busters-repos.list
+echo "deb http://deb.debian.org/debian/ bookworm main" > /etc/apt/sources.list.d/bookworm-repos.list
+echo "deb-src http://deb.debian.org/debian/ bookworm main" >> /etc/apt/sources.list.d/bookworm-repos.list
 apt-get update
-for platform in ${DEB_CROSSPLATFORMS}; do apt-get install -y libpcap0.8:${platform}=1.8.1-6+deb10u1 libpcap0.8-dev:${platform}=1.8.1-6+deb10u1 libpcap-dev:${platform}=1.8.1-6+deb10u1; done
+for platform in ${DEB_CROSSPLATFORMS}; do apt-get install -y flex bison libdbus-1-dev:${platform}; done
 EOBUSTERREPOS
 # End Stage 1
 ########
@@ -71,12 +71,22 @@ ENV BUILDARCH=${BUILDARCH}
 # Git hash that will be built into executables
 ENV WEAVE_VERSION=${WEAVE_VERSION}
 
+RUN cd /tmp \
+    && wget https://www.tcpdump.org/release/libpcap-1.8.1.tar.gz \
+    && tar -xvf libpcap-1.8.1.tar.gz \
+    && cd libpcap-1.8.1 \
+    && ls -l \
+    && ./configure --disable-dbus \
+    && make \
+    && make install
+
+
 WORKDIR /root/weave
 COPY . .
 
 RUN go mod download -x
 RUN <<EOMAKE
-cd reweave/build 
+cd reweave/build
 CGO_ENABLED=1 make all
 EOMAKE
 # End Stage 2
