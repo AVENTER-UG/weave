@@ -19,7 +19,7 @@ build-plugin: ../prog/net-plugin/launch.sh ../prog/net-plugin/config.json
 	tools/build-plugin.sh
 
 .PHONY: build
-build: build-images build-plugin
+build: sboom build-images build-plugin
 
 .PHONY: publish-images
 publish-images: submodule
@@ -67,3 +67,7 @@ scan:
 .PHONY: clean-scan
 clean-scan:
 	tools/clean-scans.sh
+
+sboom:
+	syft dir:../ > scans/sbom.txt
+	syft dir:../ -o json > scans/sbom.json

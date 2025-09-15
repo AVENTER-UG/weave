@@ -14,7 +14,7 @@ fi
 # To build the plugin for multiple architecture, the 
 # local Docker engine needs to have the containerd
 # snapshotter enabled.
-if [ "overlayfs" != "$(docker info -f '{{.Driver}}')" ]; then
+if [ "overlay2" != "$(docker info -f '{{.Driver}}')" ]; then
     echo "To ensure that the plugin can be built for multiple architectures, the"
     echo "Docker Engine needs to have the containerd image store feature enabled."
     echo "Please see https://docs.docker.com/storage/containerd/ to find out how."

@@ -1,3 +1,7 @@
+## Release master
+
+- ADD: sbom under reweave/scans
+
 ## Release 2.10.1
 
 - Security Updates.
