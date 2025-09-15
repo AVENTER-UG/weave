@@ -7,19 +7,9 @@ This repository contains a fork of Weave Net, the first product developed by Wea
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/AVENTER-UG/weave?include_prereleases)](https://github.com/AVENTER-UG/weave/releases)
 [![Unique CVE count in all images](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FAVENTER-UG%2Fweave%2Fmaster%2Freweave%2Fscans%2Fbadge.json&label=CVE%20count "The number of unique CVEs reported by scanning all images")](reweave/scans/report.md)
 
-The history of the fork can be found in [HISTORY.md](HISTORY.md).
+## Funding
 
-## Using Weave Net on Kubernetes
-
-On a newly created Kubernetes cluster, the Weave Net CNI pluging can be installed by running the following command:
-
-```
-kubectl apply -f https://reweave.azurewebsites.net/k8s/v1.29/net.yaml
-```
-
-Replace `v1.29` with the version on Kubernetes on your cluster.
-
-That endpoint is provided by the companion project [weave-endpoint](https://github.com/AVENTER-UG/weave-endpoint).
+[![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate/?hosted_button_id=H553XE4QJ9GJ8)
 
 ## Using Weave Net in other ways
 
