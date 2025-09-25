@@ -20,7 +20,7 @@ fi
 : "${PUBLISH:=}"
 
 if [ "$PUBLISH" = "true" ]; then
-    POSTBUILD="--push"
+    POSTBUILD="--push --sbom=true --provenance=true"
 elif [ "$PUBLISH" = "false" ]; then
     POSTBUILD="--load"
 else
@@ -59,7 +59,6 @@ build_image() {
     # shellcheck disable=SC2086
     docker buildx build \
 						${POSTBUILD} \
-						--sbom=true --provenance=true \
             --progress=plain \
             --target="$1" \
             --build-arg=ALPINE_BASEIMAGE=${ALPINE_BASEIMAGE} \
@@ -76,12 +75,12 @@ build_image() {
 
 # shellcheck disable=SC2086
 {
-docker buildx create --use --name buildkit
+#docker buildx create --use --name buildkit
 build_image "weaverimage" ${WEAVER_IMAGE}
 build_image "weavexecimage" ${WEAVEEXEC_IMAGE}
 build_image "weavekubeimage" ${WEAVEKUBE_IMAGE}
 build_image "weavenpcimage" ${WEAVENPC_IMAGE}
 build_image "weavedbimage" ${WEAVEDB_IMAGE}
 build_image "networktesterimage" ${NETWORKTESTER_IMAGE}
-docker buildx rm buildkit
+#docker buildx rm buildkit
 }

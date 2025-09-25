@@ -1,4 +1,4 @@
-IMAGE_VERSION ?= 2.10.1
+IMAGE_VERSION ?= latest
 REGISTRY_USER ?= avhost
 
 ALPINE_BASEIMAGE ?= alpine:3.22

@@ -63,6 +63,7 @@ prog/weaveexec/weavewait_nomcast
 prog/weaveexec/sigproxy
 prog/weaver/weaveutil
 prog/weaveexec/docker*
+prog/weave-client/weaveclient
 Vagrantfile.local
 test/tls/tls
 test/tls/*.pem

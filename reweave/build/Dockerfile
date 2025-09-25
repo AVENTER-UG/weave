@@ -2,65 +2,12 @@
 ARG ALPINE_BASEIMAGE=alpine:3.22
 
 ########
-# Stage 1: go 1.23.1 on debian bullseye
-# This installs cross-compilation tools for supported architectures.
-# It will be built only once for a given build platform. Subsequent
-# stages will start from this and cross-compile for each target
-# architecture.
-FROM --platform=${BUILDPLATFORM} golang:1.24.6-bullseye AS builderbase
-
-# Support Raspberry Pi 2 and newer
-ENV GOARM 7
-
-# The names of the architectures that we fetch cross-compilers for
-# from the Debian packages.
-# Disabling support for ppc64el and s390x architectures, as the 
-# debian buster repository does not host binaries for libpcap-0.8
-# on those architectures any more.
-# ENV DEB_CROSSPLATFORMS \
-#       amd64 \
-# 	armhf \
-# 	arm64 \
-# 	ppc64el \
-# 	s390x
-ENV DEB_CROSSPLATFORMS \
-		amd64
-
-# Install the build-essential and crossbuild-essential-ARCH packages
-RUN <<EOCROSSCOMPILERS
-set -e
-echo 'Acquire::Retries "6";' > /etc/apt/apt.conf.d/80-retries
-for platform in ${DEB_CROSSPLATFORMS}; do dpkg --add-architecture $platform; done 
-apt-get update
-apt-get install -y build-essential
-for platform in ${DEB_CROSSPLATFORMS}; do apt-get install -y crossbuild-essential-${platform}; done 
-apt-get clean
-rm -rf /var/lib/apt/lists/*
-EOCROSSCOMPILERS
-
-# weave net is dependent on libpcap, which it statically links.
-# Later versions of libpcap do not allow static linking. The
-# last version in stable Debian repositories which does is 1.8.1
-# , which is available in the debian buster repos.
-# Add buster repositories
-# Install libpcap-dev version 1.8.1-6+deb10u1 for all supported
-# architectures.
-RUN <<EOBUSTERREPOS
-echo "deb http://deb.debian.org/debian/ bookworm main" > /etc/apt/sources.list.d/bookworm-repos.list
-echo "deb-src http://deb.debian.org/debian/ bookworm main" >> /etc/apt/sources.list.d/bookworm-repos.list
-apt-get update
-for platform in ${DEB_CROSSPLATFORMS}; do apt-get install -y flex bison libpcap0.8:${platform} libpcap0.8-dev:${platform} libdbus-1-dev:${platform}; done
-EOBUSTERREPOS
-# End Stage 1
-########
-
-########
 # Stage 2: Compile weave-net executables.
 # This stage builds one image per supported architecture. The
 # companion Makefile compiles all executables that make up weave
 # net, for the target architecture. Subsequent stages each build
 # an image for a single component of weave-net.
-FROM builderbase AS builder
+FROM --platform=linux/${TARGETARCH} ${ALPINE_BASEIMAGE} AS builder
 ARG BUILDARCH
 ARG TARGETARCH
 ARG WEAVE_VERSION
@@ -81,6 +28,13 @@ ENV WEAVE_VERSION=${WEAVE_VERSION}
 
 WORKDIR /root/weave
 COPY . .
+
+RUN touch /etc/apk/world
+RUN apk add --update \
+    		go \
+				libpcap \
+				libpcap-dev \
+				make
 
 RUN go mod download -x
 RUN <<EOMAKE
@@ -124,6 +78,7 @@ LABEL works.weave.role="system" \
 
 RUN <<EOWEAVER
       apk add --update \
+									libpcap \
                   curl \
                   iptables \
                   ipset \
