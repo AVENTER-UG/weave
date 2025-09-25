@@ -24,9 +24,7 @@ ENV GOARM 7
 # 	ppc64el \
 # 	s390x
 ENV DEB_CROSSPLATFORMS \
-		amd64 \
-		armhf \
-		arm64
+		amd64
 
 # Install the build-essential and crossbuild-essential-ARCH packages
 RUN <<EOCROSSCOMPILERS
@@ -51,7 +49,7 @@ RUN <<EOBUSTERREPOS
 echo "deb http://deb.debian.org/debian/ bookworm main" > /etc/apt/sources.list.d/bookworm-repos.list
 echo "deb-src http://deb.debian.org/debian/ bookworm main" >> /etc/apt/sources.list.d/bookworm-repos.list
 apt-get update
-for platform in ${DEB_CROSSPLATFORMS}; do apt-get install -y flex bison libdbus-1-dev:${platform}; done
+for platform in ${DEB_CROSSPLATFORMS}; do apt-get install -y flex bison libpcap0.8:${platform} libpcap0.8-dev:${platform} libdbus-1-dev:${platform}; done
 EOBUSTERREPOS
 # End Stage 1
 ########
@@ -71,14 +69,14 @@ ENV BUILDARCH=${BUILDARCH}
 # Git hash that will be built into executables
 ENV WEAVE_VERSION=${WEAVE_VERSION}
 
-RUN cd /tmp \
-    && wget https://www.tcpdump.org/release/libpcap-1.8.1.tar.gz \
-    && tar -xvf libpcap-1.8.1.tar.gz \
-    && cd libpcap-1.8.1 \
-    && ls -l \
-    && ./configure --disable-dbus \
-    && make \
-    && make install
+#RUN cd /tmp \
+#    && wget https://www.tcpdump.org/release/libpcap-1.8.1.tar.gz \
+#    && tar -xvf libpcap-1.8.1.tar.gz \
+#    && cd libpcap-1.8.1 \
+#    && ls -l \
+#    && ./configure --disable-dbus \
+#    && make \
+#    && make install
 
 
 WORKDIR /root/weave

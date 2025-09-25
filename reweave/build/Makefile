@@ -59,24 +59,26 @@ WEAVEWAIT_EXE=../../prog/weavewait/weavewait
 WEAVEWAIT_NOOP_EXE=../../prog/weavewait/weavewait_noop
 WEAVEWAIT_NOMCAST_EXE=../../prog/weavewait/weavewait_nomcast
 WEAVEUTIL_EXE=../../prog/weaveutil/weaveutil
+WEAVECLIENT_EXE=../../prog/weave-client/weaveclient
 RUNNER_EXE=../../tools/runner/runner
 TEST_TLS_EXE=../../test/tls/tls
 NETWORKTESTER_EXE=../../test/images/network-tester/webserver
 
 # All binaries together in a list
-EXES=$(WEAVER_EXE) $(SIGPROXY_EXE) $(KUBEUTILS_EXE) $(WEAVENPC_EXE) $(WEAVEWAIT_EXE) $(WEAVEWAIT_NOOP_EXE) $(WEAVEWAIT_NOMCAST_EXE) $(WEAVEUTIL_EXE) $(RUNNER_EXE) $(TEST_TLS_EXE) $(NETWORKTESTER_EXE)
+EXES=$(WEAVER_EXE) $(SIGPROXY_EXE) $(KUBEUTILS_EXE) $(WEAVENPC_EXE) $(WEAVEWAIT_EXE) $(WEAVEWAIT_NOOP_EXE) $(WEAVEWAIT_NOMCAST_EXE) $(WEAVEUTIL_EXE) $(RUNNER_EXE) $(TEST_TLS_EXE) $(NETWORKTESTER_EXE) $(WEAVECLIENT_EXE)
 
 # The flags we are passing to go build. -extldflags -static for making a static binary, 
 # -X main.version for telling the Go binary which version it is,
 # -s -w drop symbol tables used by debuggers (not Go's internal symbol info)
 # -tags "osusergo netgo" to use native Go UID and DNS implementations
 BUILD_FLAGS=-ldflags "-extldflags -static -X main.version=$(WEAVE_VERSION) -s -w" -tags "osusergo netgo"
+BUILD_FLAGS=-ldflags "-X main.version=$(WEAVE_VERSION) -s -w" -tags "osusergo netgo"
 
 # This allows adding up to three extra switches to the -ldflags value inside
 # the same string returned by BUILD_FLAGS. Needed because the go # tool does
 # not combine multiple -ldflags 
 define extraldflags
--ldflags "-extldflags -static -X main.version=$(WEAVE_VERSION) $(strip $(1) $(2) $(3)) -s -w" -tags "osusergo netgo"
+-ldflags "-X main.version=$(WEAVE_VERSION) $(strip $(1) $(2) $(3)) -s -w" -tags "osusergo netgo"
 endef
 
 # Targets
@@ -88,7 +90,7 @@ showbuild:
 	echo CC: $(CC)
 	echo CGO_LDFLAGS: $(CGO_LDFLAGS)
 
-$(WEAVER_EXE) $(WEAVEUTIL_EXE): ../../common/*.go ../../common/*/*.go ../../net/*.go ../../net/*/*.go
+$(WEAVER_EXE) $(WEAVEUTIL_EXE) $(WEAVECLIENT_EXE): ../../common/*.go ../../common/*/*.go ../../net/*.go ../../net/*/*.go
 $(WEAVER_EXE): ../../router/*.go ../../ipam/*.go ../../ipam/*/*.go ../../db/*.go ../../nameserver/*.go ../../prog/weaver/*.go
 $(WEAVER_EXE): ../../api/*.go ../../plugin/*.go ../../plugin/*/*
 $(WEAVER_EXE):  ../../proxy/*.go
@@ -102,6 +104,7 @@ $(WEAVEWAIT_NOOP_EXE): ../../prog/weavewait/*.go
 $(WEAVEWAIT_EXE): ../../prog/weavewait/*.go ../../net/*.go
 $(WEAVEWAIT_NOMCAST_EXE): ../../prog/weavewait/*.go ../../net/*.go
 $(NETWORKTESTER_EXE): ../../test/images/network-tester/*.go
+$(WEAVECLIENT_EXE): ../../prog/weave-client/*.go
 
 exes: $(EXES) 
 
@@ -119,6 +122,9 @@ $(WEAVEWAIT_EXE):
 
 $(WEAVEWAIT_NOMCAST_EXE):
 	CC=$(CC) GOOS=linux GOARCH=$(ARCH) go build $(BUILD_FLAGS) -tags "osusergo netgo iface" -o $@ ./$(@D)
+
+$(WEAVECLIENT_EXE):
+	CC=$(CC) GOOS=linux GOARCH=$(ARCH) go build $(BUILD_FLAGS) -o $@ ./$(@D)
 
 # These programs need a separate rule as they fail the netgo check in
 # the main build stanza due to not importing net package
