@@ -10,14 +10,8 @@ Ensure you are running Linux (kernel 3.8 or later) and have Docker
 
 Install Weave Net by running the following:
 
-    sudo curl -L https://reweave.azurewebsites.net/get-weave -o /usr/local/bin/weave
+    sudo curl -L https://raw.githubusercontent.com/AVENTER-UG/weave/refs/heads/master/weave -o /usr/local/bin/weave
     sudo chmod a+x /usr/local/bin/weave
-
-The URL https://reweave.azurewebsites.net/get-weave, is provided by the companion project [weave-endpoint](https://github.com/AVENTER-UG/weave-endpoint). You can also fetch a particular version of Weave Net by specifying a `?version=` query string, like this:
-
-    sudo curl -L https://reweave.azurewebsites.net/get-weave -o /usr/local/bin/weave?version=v2.8.3
-
-Supported versions start from 2.8.2, the first release since forking from weaveworks/weave.
 
 > **Note:** The following information is obsolete, and included only for historical reference.
 >

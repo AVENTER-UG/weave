@@ -1,7 +1,7 @@
-## Release master
+## Release 2.11.0
 
 - ADD: sbom under reweave/scans
-- CHANGE: to dynamic linking libraries
+- CHANGE: to dynamic linked libraries
 
 ## Release 2.10.1
 
