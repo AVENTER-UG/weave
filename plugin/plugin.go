@@ -6,7 +6,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/docker/libnetwork/ipamapi"
 	weaveapi "github.com/AVENTER-UG/weave/api"
 	"github.com/AVENTER-UG/weave/common"
 	"github.com/AVENTER-UG/weave/common/docker"
@@ -14,6 +13,7 @@ import (
 	ipamplugin "github.com/AVENTER-UG/weave/plugin/ipam"
 	netplugin "github.com/AVENTER-UG/weave/plugin/net"
 	"github.com/AVENTER-UG/weave/plugin/skel"
+	"github.com/docker/libnetwork/ipamapi"
 )
 
 const (

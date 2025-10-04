@@ -5,10 +5,10 @@ import (
 	"net"
 	"strings"
 
-	"github.com/docker/libnetwork/discoverapi"
-	"github.com/docker/libnetwork/netlabel"
 	"github.com/AVENTER-UG/weave/api"
 	"github.com/AVENTER-UG/weave/common"
+	"github.com/docker/libnetwork/discoverapi"
+	"github.com/docker/libnetwork/netlabel"
 )
 
 type Ipam struct {

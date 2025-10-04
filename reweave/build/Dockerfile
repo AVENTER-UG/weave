@@ -2,7 +2,7 @@
 ARG ALPINE_BASEIMAGE=alpine:3.22
 
 ########
-# Stage 2: Compile weave-net executables.
+# Stage: Compile weave-net executables.
 # This stage builds one image per supported architecture. The
 # companion Makefile compiles all executables that make up weave
 # net, for the target architecture. Subsequent stages each build
@@ -15,16 +15,6 @@ ENV ARCH=${TARGETARCH}
 ENV BUILDARCH=${BUILDARCH}
 # Git hash that will be built into executables
 ENV WEAVE_VERSION=${WEAVE_VERSION}
-
-#RUN cd /tmp \
-#    && wget https://www.tcpdump.org/release/libpcap-1.8.1.tar.gz \
-#    && tar -xvf libpcap-1.8.1.tar.gz \
-#    && cd libpcap-1.8.1 \
-#    && ls -l \
-#    && ./configure --disable-dbus \
-#    && make \
-#    && make install
-
 
 WORKDIR /root/weave
 COPY . .
@@ -41,11 +31,11 @@ RUN <<EOMAKE
 cd reweave/build
 CGO_ENABLED=1 make all
 EOMAKE
-# End Stage 2
+# End Stage weave-net executables
 ########
 
 ########
-# Stage 3: Alpine Base
+# Stage: Alpine Base
 # This stage exists in case there are any additional tweaks 
 # required in the alpine base image.
 FROM --platform=linux/${TARGETARCH} ${ALPINE_BASEIMAGE} AS alpinebase
@@ -54,16 +44,16 @@ FROM --platform=linux/${TARGETARCH} ${ALPINE_BASEIMAGE} AS alpinebase
 RUN apk update \
     && apk upgrade \
     && rm -rf /var/cache/apk/*
-# End Stage 3
+# End Stage alpine base
 ########
 
 ########
-# Stage 4: Weaver image
+# Stage: Weaver image
 # This will be tagged as REGISTRY_USER/weave:VERSION
 FROM alpinebase AS weaverimage
 
 LABEL works.weave.role="system" \
-      maintainer="Raj Chaudhuri <raj@rajware.net>" \
+      maintainer="Andreas Peters <support@aventer.biz>" \
       org.opencontainers.image.title="Weave Net" \
       org.opencontainers.image.description="Weave Net creates a virtual network that connects Docker containers across multiple hosts and enables their automatic discovery" \
       org.opencontainers.image.url="https://github.com/AVENTER-UG/weave" \
@@ -108,18 +98,18 @@ ARG imageversion
 LABEL org.opencontainers.image.revision="${revision}" \
       org.label-schema.vcs-ref="${revision}" \
       org.reweave.image-version="${imageversion}"
-# End Stage 4
+# End Stage weaver image
 ########
 
 ########
-# Stage 5: weaveexec image
+# Stage: weaveexec image
 # This will be tagged as REGISTRY_USER/weaveexec:VERSION
 FROM weaverimage AS weavexecimage
 
-LABEL maintainer="Raj Chaudhuri <raj@rajware.net>" \
+LABEL maintainer="Andreas Peters <support@aventer.biz>" \
       org.opencontainers.image.title="weaveexec" \
       org.opencontainers.image.source="https://github.com/AVENTER-UG/weave" \
-      org.opencontainers.image.vendor="Raj Chaudhuri (forked from Weaveworks)"
+      org.opencontainers.image.vendor="AVENTER UG (forked from rajch/Weaveworks)"
 
 ENTRYPOINT ["/home/weave/sigproxy", "/home/weave/weave"]
 
@@ -133,15 +123,41 @@ ARG revision
 ARG imageversion
 LABEL org.opencontainers.image.revision="${revision}" \
       org.reweave.image-version="${imageversion}"
-# End Stage 5
+# End Stage weaveexec
 ########
 
 ########
-# Stage 6: weavekube image
+# Stage: weaveclient image
+# This will be tagged as REGISTRY_USER/weaveclient:VERSION
+FROM weaverimage AS weaveclientimage
+
+LABEL maintainer="Andreas Peters <support@aventer.biz>" \
+      org.opencontainers.image.title="weaveclient" \
+      org.opencontainers.image.source="https://github.com/AVENTER-UG/weave" \
+      org.opencontainers.image.vendor="AVENTER UG"
+
+ENTRYPOINT ["/home/weave/sigproxy", "/home/weave/weaveclient"]
+
+COPY --from=builder /root/weave/prog/weave-client/weaveclient /home/weave/
+COPY --from=builder /root/weave/prog/sigproxy/sigproxy /root/weave/prog/weaveexec/symlink /home/weave/
+COPY --from=builder /root/weave/prog/weavewait/weavewait /w/w
+COPY --from=builder /root/weave/prog/weavewait/weavewait_noop /w-noop/w
+COPY --from=builder /root/weave/prog/weavewait/weavewait_nomcast /w-nomcast/w
+WORKDIR /home/weave
+
+ARG revision
+ARG imageversion
+LABEL org.opencontainers.image.revision="${revision}" \
+      org.reweave.image-version="${imageversion}"
+# End Stage weaveclient
+########
+
+########
+# Stage: weavekube image
 # This will be tagged as REGISTRY_USER/weave-kube:VERSION
 FROM weaverimage AS weavekubeimage
 
-LABEL maintainer="Raj Chaudhuri <raj@rajware.net>" \
+LABEL maintainer="Andreas Peters <support@aventer.biz>" \
       org.opencontainers.image.title="weave-kube" \
       org.opencontainers.image.source="https://github.com/AVENTER-UG/weave" \
       org.opencontainers.image.vendor="AVENTER UG (forked from rajch/Weaveworks)"
@@ -153,16 +169,16 @@ ARG revision
 ARG imageversion
 LABEL org.opencontainers.image.revision="${revision}" \
       org.reweave.image-version="${imageversion}"
-# End Stage 6
+# End Stage weavekube
 ########
 
 ########
-# Stage 7: weavenpc image
+# Stage: weavenpc image
 # This will be tagged as REGISTRY_USER/weave-npc:VERSION
 FROM alpinebase AS weavenpcimage
 
 LABEL works.weave.role="system" \
-      maintainer="Raj Chaudhuri <raj@rajware.net>" \
+      maintainer="Andreas Peters <support@aventer.biz>" \
       org.opencontainers.image.title="Weave Net" \
       org.opencontainers.image.description="Weave Net creates a virtual network that connects Docker containers across multiple hosts and enables their automatic discovery" \
       org.opencontainers.image.url="https://github.com/AVENTER-UG/weave" \
@@ -203,21 +219,21 @@ ARG imageversion
 LABEL org.opencontainers.image.revision="${revision}" \
       org.label-schema.vcs-ref="${revision}" \
       org.reweave.image-version="${imageversion}"
-# End Stage 7
+# End Stage weaveenpc
 ########
 
 ########
-# Stage 8: weavedb image
+# Stage: weavedb image
 # This is a nearly-empty image that we use to create a data-only
 # container for persistence.
 # This will be tagged as REGISTRY_USER/weavedb:VERSION
 FROM scratch AS weavedbimage
 
 LABEL works.weave.role="system" \
-      maintainer="Raj Chaudhuri <raj@rajware.net>" \
+      maintainer="Andreas Peters <support@aventer.biz>" \
       org.opencontainers.image.title="weavedb" \
       org.opencontainers.image.source="https://github.com/AVENTER-UG/weave" \
-      org.opencontainers.image.vendor="Raj Chaudhuri (forked from Weaveworks)"
+      org.opencontainers.image.vendor="AVENTER UG (forked from rajch/Weaveworks)"
 
 ENTRYPOINT ["data-only"]
 # Workaround for Docker refusing to save an empty image
@@ -227,11 +243,11 @@ ARG revision
 ARG imageversion
 LABEL org.opencontainers.image.revision="${revision}" \
       org.reweave.image-version="${imageversion}"
-# End Stage 8
+# End Stage weavedb
 ########
 
 ########
-# Stage 9: Network tester
+# Stage: Network tester
 # This will be tagged as REGISTRY_USER/network-tester:VERSION
 #
 # Copyright 2016 The Kubernetes Authors.
@@ -253,5 +269,5 @@ RUN apk add --no-cache curl bind-tools
 COPY --from=builder /root/weave/test/images/network-tester/webserver webserver
 EXPOSE 8080
 ENTRYPOINT ["/webserver"]
-# End Stage 9
+# End Stage network tester
 ########

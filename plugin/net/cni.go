@@ -9,13 +9,13 @@ import (
 	"os"
 	"strings"
 
+	weaveapi "github.com/AVENTER-UG/weave/api"
+	weavenet "github.com/AVENTER-UG/weave/net"
+	ipamplugin "github.com/AVENTER-UG/weave/plugin/ipam"
 	"github.com/containernetworking/cni/pkg/skel"
 	"github.com/containernetworking/cni/pkg/types"
 	current "github.com/containernetworking/cni/pkg/types/100"
 	"github.com/containernetworking/plugins/pkg/ipam"
-	weaveapi "github.com/AVENTER-UG/weave/api"
-	weavenet "github.com/AVENTER-UG/weave/net"
-	ipamplugin "github.com/AVENTER-UG/weave/plugin/ipam"
 	"github.com/vishvananda/netlink"
 	"github.com/vishvananda/netns"
 )

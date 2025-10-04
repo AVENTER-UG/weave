@@ -6,8 +6,8 @@ import (
 	"log"
 	"strings"
 
+	"github.com/AVENTER-UG/weave/common/logging"
 	"github.com/sirupsen/logrus"
-	"github.com/weaveworks/common/logging"
 )
 
 type textFormatter struct {

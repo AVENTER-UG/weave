@@ -246,7 +246,7 @@ func contactOthers(state *State) {
 	}
 }
 
-//getWebserverEndpoints returns the webserver endpoints as a set of String, each in the format like "http://{ip}:{port}"
+// getWebserverEndpoints returns the webserver endpoints as a set of String, each in the format like "http://{ip}:{port}"
 func getWebserverEndpoints() map[string]struct{} {
 	eps := map[string]struct{}{}
 	if *dnsName != "" {

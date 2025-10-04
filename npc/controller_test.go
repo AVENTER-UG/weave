@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pkg/errors"
 	"github.com/AVENTER-UG/weave/common/chains"
 	"github.com/AVENTER-UG/weave/net/ipset"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	coreapi "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"

@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AVENTER-UG/weave/common/mflag"
+	"github.com/AVENTER-UG/weave/common/mflagext"
+	"github.com/AVENTER-UG/weave/common/signals"
 	"github.com/gorilla/mux"
 	"github.com/pkg/profile"
-	"github.com/weaveworks/common/mflag"
-	"github.com/weaveworks/common/mflagext"
-	"github.com/weaveworks/common/signals"
 	"github.com/weaveworks/mesh"
 
 	"github.com/AVENTER-UG/weave/common"

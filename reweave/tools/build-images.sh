@@ -33,6 +33,7 @@ WEAVEEXEC_IMAGE=${REGISTRY_USER}/weaveexec
 WEAVEKUBE_IMAGE=${REGISTRY_USER}/weave-kube
 WEAVENPC_IMAGE=${REGISTRY_USER}/weave-npc
 WEAVEDB_IMAGE=${REGISTRY_USER}/weavedb
+WEAVECLIENT_IMAGE=${REGISTRY_USER}/weaveclient
 NETWORKTESTER_IMAGE=${REGISTRY_USER}/network-tester
 
 build_image() {
@@ -81,6 +82,7 @@ build_image "weavexecimage" ${WEAVEEXEC_IMAGE}
 build_image "weavekubeimage" ${WEAVEKUBE_IMAGE}
 build_image "weavenpcimage" ${WEAVENPC_IMAGE}
 build_image "weavedbimage" ${WEAVEDB_IMAGE}
+build_image "weaveclientimage" ${WEAVECLIENT_IMAGE}
 build_image "networktesterimage" ${NETWORKTESTER_IMAGE}
 #docker buildx rm buildkit
 }

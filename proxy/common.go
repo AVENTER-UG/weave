@@ -9,9 +9,9 @@ import (
 	"regexp"
 	"strings"
 
-	docker "github.com/fsouza/go-dockerclient"
 	"github.com/AVENTER-UG/weave/common"
 	weavedocker "github.com/AVENTER-UG/weave/common/docker"
+	docker "github.com/fsouza/go-dockerclient"
 )
 
 var (

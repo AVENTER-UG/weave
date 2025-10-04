@@ -90,7 +90,7 @@ showbuild:
 	echo CC: $(CC)
 	echo CGO_LDFLAGS: $(CGO_LDFLAGS)
 
-$(WEAVER_EXE) $(WEAVEUTIL_EXE) $(WEAVECLIENT_EXE): ../../common/*.go ../../common/*/*.go ../../net/*.go ../../net/*/*.go
+$(WEAVER_EXE) $(WEAVEUTIL_EXE): ../../common/*.go ../../common/*/*.go ../../net/*.go ../../net/*/*.go
 $(WEAVER_EXE): ../../router/*.go ../../ipam/*.go ../../ipam/*/*.go ../../db/*.go ../../nameserver/*.go ../../prog/weaver/*.go
 $(WEAVER_EXE): ../../api/*.go ../../plugin/*.go ../../plugin/*/*
 $(WEAVER_EXE):  ../../proxy/*.go
@@ -106,7 +106,7 @@ $(WEAVEWAIT_NOMCAST_EXE): ../../prog/weavewait/*.go ../../net/*.go
 $(NETWORKTESTER_EXE): ../../test/images/network-tester/*.go
 $(WEAVECLIENT_EXE): ../../prog/weave-client/*.go
 
-exes: $(EXES) 
+exes: $(EXES)
 
 $(WEAVER_EXE):
 	CC=$(CC) GOOS=linux GOARCH=$(ARCH) go build $(BUILD_FLAGS) -o $@ ./$(@D)
@@ -123,7 +123,7 @@ $(WEAVEWAIT_EXE):
 $(WEAVEWAIT_NOMCAST_EXE):
 	CC=$(CC) GOOS=linux GOARCH=$(ARCH) go build $(BUILD_FLAGS) -tags "osusergo netgo iface" -o $@ ./$(@D)
 
-$(WEAVECLIENT_EXE):
+$(WEAVECLIENT_EXE): $(WEAVER_EXE)
 	CC=$(CC) GOOS=linux GOARCH=$(ARCH) go build $(BUILD_FLAGS) -o $@ ./$(@D)
 
 # These programs need a separate rule as they fail the netgo check in
