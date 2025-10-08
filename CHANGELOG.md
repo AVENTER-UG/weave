@@ -1,7 +1,8 @@
 ## Master
 
-- ADD: [client] add api call to pull client information from CRM.
 - ADD: include go libs from weaveworks common.
+- ADD: [client] add api call to pull client information from CRM.
+- ADD: [client] set weaver env variables by api backend.
 
 ## Release 2.11.0
 
