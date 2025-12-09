@@ -126,7 +126,7 @@ func (j attachJob) Stop() {
 	j.timer.Stop()
 }
 
-const defaulDockerAPIVersion = "1.24"
+const defaulDockerAPIVersion = "1.44"
 
 func dockerAPIVersion() string {
 	overridenAPIVersion, ok := os.LookupEnv("DOCKER_API_VERSION")
