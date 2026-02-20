@@ -63,7 +63,7 @@ RUN apk update \
 FROM alpinebase AS weaverimage
 
 LABEL works.weave.role="system" \
-      maintainer="Raj Chaudhuri <raj@rajware.net>" \
+      maintainer="AVENTER UG <support@aventer.biz>" \
       org.opencontainers.image.title="Weave Net" \
       org.opencontainers.image.description="Weave Net creates a virtual network that connects Docker containers across multiple hosts and enables their automatic discovery" \
       org.opencontainers.image.url="https://github.com/AVENTER-UG/weave" \
@@ -116,7 +116,7 @@ LABEL org.opencontainers.image.revision="${revision}" \
 # This will be tagged as REGISTRY_USER/weaveexec:VERSION
 FROM weaverimage AS weavexecimage
 
-LABEL maintainer="Raj Chaudhuri <raj@rajware.net>" \
+LABEL maintainer="AVENTER UG <support@aventer.biz>" \
       org.opencontainers.image.title="weaveexec" \
       org.opencontainers.image.source="https://github.com/AVENTER-UG/weave" \
       org.opencontainers.image.vendor="Raj Chaudhuri (forked from Weaveworks)"
@@ -141,7 +141,7 @@ LABEL org.opencontainers.image.revision="${revision}" \
 # This will be tagged as REGISTRY_USER/weave-kube:VERSION
 FROM weaverimage AS weavekubeimage
 
-LABEL maintainer="Raj Chaudhuri <raj@rajware.net>" \
+LABEL maintainer="AVENTER UG <support@aventer.biz>" \
       org.opencontainers.image.title="weave-kube" \
       org.opencontainers.image.source="https://github.com/AVENTER-UG/weave" \
       org.opencontainers.image.vendor="AVENTER UG (forked from rajch/Weaveworks)"
@@ -162,7 +162,7 @@ LABEL org.opencontainers.image.revision="${revision}" \
 FROM alpinebase AS weavenpcimage
 
 LABEL works.weave.role="system" \
-      maintainer="Raj Chaudhuri <raj@rajware.net>" \
+      maintainer="AVENTER UG <support@aventer.biz>" \
       org.opencontainers.image.title="Weave Net" \
       org.opencontainers.image.description="Weave Net creates a virtual network that connects Docker containers across multiple hosts and enables their automatic discovery" \
       org.opencontainers.image.url="https://github.com/AVENTER-UG/weave" \
@@ -214,7 +214,7 @@ LABEL org.opencontainers.image.revision="${revision}" \
 FROM scratch AS weavedbimage
 
 LABEL works.weave.role="system" \
-      maintainer="Raj Chaudhuri <raj@rajware.net>" \
+      maintainer="AVENTER UG <support@aventer.biz>" \
       org.opencontainers.image.title="weavedb" \
       org.opencontainers.image.source="https://github.com/AVENTER-UG/weave" \
       org.opencontainers.image.vendor="Raj Chaudhuri (forked from Weaveworks)"
