@@ -12,7 +12,7 @@ clean:
 
 # build also create sbom and push the images
 push:
-	cd reweave; ${MAKE} build
+	cd reweave; ${MAKE} publish
 
 go-fmt:
 	@gofmt

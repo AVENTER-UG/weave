@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1
 ARG ALPINE_BASEIMAGE=alpine:3.22
 
 ########

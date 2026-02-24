@@ -5,7 +5,7 @@ search_type: Documentation
 ---
 Weave Net was the first product created by Weaveworks. It was and still is a popular choice for container networking, especially as a CNI add-on for Kubernetes.
 
-Weave Net is now a community-supported project, run out of the forked GitHub repository [rajch/weave](https://github.com/AVENTER-UG/weave).
+Weave Net is now a community-supported project, run out of the forked GitHub repository [avhost/weave](https://github.com/AVENTER-UG/weave).
 
 ## Using Weave with Kubernetes
 
