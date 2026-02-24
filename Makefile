@@ -9,10 +9,13 @@ build:
 
 clean:
 	-cd reweave; ${MAKE} $@
+	-docker plugin rm avhost/net-plugin:latest_release-amd64
+
 
 # build also create sbom and push the images
 push:
-	cd reweave; ${MAKE} publish
+	-docker plugin rm avhost/net-plugin:latest_release-amd64
+	cd reweave; ${MAKE} build publish
 
 go-fmt:
 	@gofmt

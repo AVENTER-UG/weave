@@ -24,7 +24,7 @@ build: sboom build-images build-plugin
 .PHONY: publish-images
 publish-images: submodule
 	REGISTRY_USER=${REGISTRY_USER} IMAGE_VERSION=${IMAGE_VERSION} \
-	PLATFORMS="linux/amd64,linux/arm,linux/arm64" \
+	PLATFORMS="linux/amd64" \
 	ALPINE_BASEIMAGE=$(ALPINE_BASEIMAGE) \
 	PUBLISH=true \
 	tools/build-images.sh
@@ -32,13 +32,12 @@ publish-images: submodule
 .PHONY: publish-plugin
 publish-plugin:
 	REGISTRY_USER=${REGISTRY_USER} IMAGE_VERSION=${IMAGE_VERSION} \
-	PLATFORMS="amd64,arm,arm64" \
+	PLATFORMS="amd64" \
 	PUBLISH=true \
 	tools/build-plugin.sh
 
 .PHONY: publish
 publish: publish-images publish-plugin
-	-docker buildx create --use --name buildkit
 
 .PHONY: clean-images
 clean-images:
