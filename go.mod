@@ -1,6 +1,6 @@
 module github.com/AVENTER-UG/weave
 
-go 1.24
+go 1.24.2
 
 require (
 	github.com/andybalholm/go-bit v1.0.1
@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go v1.55.8
 	github.com/boltdb/bolt v1.3.1
 	github.com/containernetworking/cni v1.3.0
-	github.com/containernetworking/plugins v1.8.0
+	github.com/containernetworking/plugins v1.9.0
 	github.com/coreos/go-iptables v0.8.0
 	github.com/docker/docker v28.4.0+incompatible
 	github.com/docker/libnetwork v0.8.0-dev.2.0.20180212220201-119badbd737b
