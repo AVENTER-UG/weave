@@ -1,3 +1,5 @@
+IMAGE_VERSION ?= 3.0.0
+ALPINE_BASEIMAGE ?= alpine:3.23
 
 .PHONY: build push
 
@@ -21,5 +23,5 @@ go-fmt:
 	@gofmt
 
 update-gomod:
-	go get -u
+	go get -u ./...
 	go mod tidy

@@ -7,7 +7,6 @@ import (
 )
 
 const defaulDockerAPIVersion = "1.44"
-const swarmDockerAPIVersion = "1.26"
 
 // newVersionedDockerClientFromEnv offers some control over the version
 // of the docker client weaveutil uses for a number of operations.

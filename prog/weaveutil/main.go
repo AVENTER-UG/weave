@@ -37,7 +37,6 @@ func init() {
 		"cni-ipam":                 cniIPAM,
 		"bridge-ip":                bridgeIP,
 		"unique-id":                uniqueID,
-		"swarm-manager-peers":      swarmManagerPeers,
 		"is-docker-plugin-enabled": isDockerPluginEnabled,
 		"rewrite-etc-hosts":        rewriteEtcHosts,
 		"get-db-flag":              getDBFlag,
