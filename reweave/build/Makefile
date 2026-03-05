@@ -59,7 +59,6 @@ WEAVEWAIT_EXE=../../prog/weavewait/weavewait
 WEAVEWAIT_NOOP_EXE=../../prog/weavewait/weavewait_noop
 WEAVEWAIT_NOMCAST_EXE=../../prog/weavewait/weavewait_nomcast
 WEAVEUTIL_EXE=../../prog/weaveutil/weaveutil
-WEAVECLIENT_EXE=../../prog/weave-client/weaveclient
 RUNNER_EXE=../../tools/runner/runner
 TEST_TLS_EXE=../../test/tls/tls
 NETWORKTESTER_EXE=../../test/images/network-tester/webserver
@@ -104,7 +103,6 @@ $(WEAVEWAIT_NOOP_EXE): ../../prog/weavewait/*.go
 $(WEAVEWAIT_EXE): ../../prog/weavewait/*.go ../../net/*.go
 $(WEAVEWAIT_NOMCAST_EXE): ../../prog/weavewait/*.go ../../net/*.go
 $(NETWORKTESTER_EXE): ../../test/images/network-tester/*.go
-$(WEAVECLIENT_EXE): ../../prog/weave-client/*.go
 
 exes: $(EXES) 
 

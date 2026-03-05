@@ -6,7 +6,7 @@ import (
 	docker "github.com/fsouza/go-dockerclient"
 )
 
-const defaulDockerAPIVersion = "1.24"
+const defaulDockerAPIVersion = "1.44"
 const swarmDockerAPIVersion = "1.26"
 
 // newVersionedDockerClientFromEnv offers some control over the version

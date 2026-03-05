@@ -18,6 +18,7 @@ buildInputs = [
 		gcc
 		flex
 		bison
+    docker-buildx
 ];
 
 SOURCE_DATE_EPOCH = 315532800;
@@ -32,5 +33,6 @@ shellHook = ''
     export TMPDIR=/tmp
 
     mkdir /tmp/bin
+    docker buildx create --use --name buildkit
     '';
 }

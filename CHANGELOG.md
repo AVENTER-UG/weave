@@ -1,3 +1,7 @@
+## Release 2.12.0
+
+- ADD: Update to docker API Version 1.44
+
 ## Release 2.11.0
 
 - ADD: sbom under reweave/scans

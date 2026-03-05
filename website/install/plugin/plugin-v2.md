@@ -19,7 +19,7 @@ mode and requires Docker version 1.13 or later.
 To install the plugin run the following command on _each_ host already
 participating in a Swarm cluster, i.e. on all master and worker nodes:
 
-    $ docker plugin install rajchaudhuri/net-plugin:latest_release-<architecture>
+    $ docker plugin install avhost/net-plugin:latest_release-<architecture>
 
 Here, &lt;architecture> is the processor architecture on which your Docker Engine runs. 
 It is a necessary part of the plugin name, because Docker currently does not support
@@ -35,7 +35,7 @@ architectures:
 You can use the following commands to install the plugin appropriate to your architecture:
 
 {% raw %}    $ ARCH=$(docker version -f '{{.Server.Arch}}'){% endraw %}
-    $ docker plugin install rajchaudhuri/net-plugin:latest_release-$ARCH
+    $ docker plugin install avhost/net-plugin:latest_release-$ARCH
 
 Docker will pull the plugin from Docker Store, and it will ask to grant
 privileges before installing the plugin. Afterwards, it will start `weaver`
@@ -45,7 +45,7 @@ process which will try to connect to Swarm masters running Weave Net.
 
 There are several configuration parameters which can be set with:
 
-    $ docker plugin set rajchaudhuri/net-plugin:latest_release-$ARCH PARAM=VALUE
+    $ docker plugin set avhost/net-plugin:latest_release-$ARCH PARAM=VALUE
 
 The parameters include:
 
@@ -65,22 +65,22 @@ The parameters include:
 
 Before setting any parameter, the plugin has to be disabled with:
 
-    $ docker plugin disable rajchaudhuri/net-plugin:latest_release-$ARCH
+    $ docker plugin disable avhost/net-plugin:latest_release-$ARCH
 
 To re-enable the plugin run the following command:
 
-    $ docker plugin enable rajchaudhuri/net-plugin:latest_release-$ARCH
+    $ docker plugin enable avhost/net-plugin:latest_release-$ARCH
 
 ### <a name="usage"></a>Running Services or Containers Using the Plugin
 
 After you have launched the plugin, you can create a network for Docker Swarm
 services by running the following command on any Docker Swarm master node:
 
-    $ docker network create --driver=rajchaudhuri/net-plugin:latest_release-$ARCH mynetwork
+    $ docker network create --driver=avhost/net-plugin:latest_release-$ARCH mynetwork
 
 Or you can create a network for any Docker container with:
 
-    $ docker network create --driver=rajchaudhuri/net-plugin:latest_release-$ARCH --attachable mynetwork
+    $ docker network create --driver=avhost/net-plugin:latest_release-$ARCH --attachable mynetwork
 
 To start a service attached to the network run, for example:
 
