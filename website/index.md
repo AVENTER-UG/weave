@@ -14,21 +14,7 @@ If you are here for the most popular use of Weave Net - the famous one-line inst
 You can install Weave Net on a Kubernetes cluster using:
 
 ```bash
-kubectl apply -f https://reweave.azurewebsites.net/k8s/v1.29/net.yaml
-```
-where the `v1.29` part can be replaced with any Kubernetes version, the minimum being `v1.8`.
-
-If you prefer the older method using `kubectl version`, that works too:
-
-```bash
-KUBEVER=$(kubectl version | base64 | tr -d '\n')
-kubectl apply -f https://reweave.azurewebsites.net/k8s/net?k8s-version=$KUBEVER
-```
-
-Finally, you can directly apply the manifest from our releases page:
-
-```bash
-kubectl apply -f https://github.com/AVENTER-UG/weave/releases/latest/download/weave-daemonset-k8s-1.11.yaml
+kubectl apply -f https://github.com/AVENTER-UG/weave/raw/refs/heads/master/prog/weave-kube/weave-daemonset-k8s-1.29.yaml
 ```
 
 More details, and options can be found on the [Integrating Kubernetes via the Addon]({{ '/kubernetes/kube-addon' | relative_url }}) page.
