@@ -1,3 +1,12 @@
+## Release 3.0.0
+
+- DEL: Docker Swarm is deprecated. Remove swarm support.
+
+## Release 2.12.1
+
+- ADD: Security updates
+
+
 ## Release 2.12.0
 
 - ADD: Update to docker API Version 1.44

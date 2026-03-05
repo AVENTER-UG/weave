@@ -1,4 +1,4 @@
-ARG ALPINE_BASEIMAGE=alpine:3.22
+ARG ALPINE_BASEIMAGE=alpine:3.23
 
 ########
 # Stage 2: Compile weave-net executables.
