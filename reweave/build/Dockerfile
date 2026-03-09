@@ -85,15 +85,6 @@ RUN <<EOWEAVER
                   conntrack-tools \
                   bind-tools \
                   ca-certificates
-      # Alpine 3.19 made nftables the default backend for iptables
-      # From weave version 2.9.0 onwards, weave will also assume 
-      # the same, but will include iptables-legacy for backward
-      # compatibility.
-      apk add iptables-legacy
-      # ln -sf /sbin/iptables-legacy /sbin/iptables
-      # ln -sf /sbin/iptables-legacy-save /sbin/iptables-save
-      # ln -sf /sbin/iptables-legacy-restore /sbin/iptables-restore
-      rm -rf /var/cache/apk/*
 EOWEAVER
 
 COPY --from=builder /root/weave/weave /root/weave/prog/weaver/weaver /home/weave/
