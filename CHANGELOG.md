@@ -1,3 +1,11 @@
+## Release 3.0.2
+
+- FIX: do not check Address and Network overlaps with 0.0.0.0/0.
+
+## Release 3.0.1
+
+- FIX: iptables-legacy in kubernetes.
+
 ## Release 3.0.0
 
 - DEL: Docker Swarm is deprecated. Remove swarm support.

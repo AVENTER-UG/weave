@@ -1,5 +1,5 @@
-IMAGE_VERSION ?= 3.0.0
-ALPINE_BASEIMAGE ?= alpine:3.23
+IMAGE_VERSION = 3.0.2
+ALPINE_BASEIMAGE = alpine:3.23
 
 .PHONY: build push
 
@@ -7,6 +7,7 @@ all: build
 
 # this one just build executables
 build:
+	sed -i 's/^IMAGE_VERSION=.*/IMAGE_VERSION=${IMAGE_VERSION}/' ./weave
 	cd reweave; ${MAKE}
 
 clean:

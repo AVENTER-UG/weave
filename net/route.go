@@ -12,8 +12,13 @@ import (
 // routes on this host. This is the same approach taken by Docker.
 func CheckNetworkFree(subnet *net.IPNet, ignoreIfaceNames map[string]struct{}) error {
 	return forEachRoute(ignoreIfaceNames, func(route netlink.Route) error {
+		// ignore 0.0.0.0/0
+    if route.Dst != nil && route.Dst.String() == "0.0.0.0/0" {
+        return nil
+    }
+
 		if route.Dst != nil && overlaps(route.Dst, subnet) {
-			return fmt.Errorf("Network %s overlaps with existing route %s on host", subnet, route.Dst)
+			return fmt.Errorf("Network %s overlaps with existing route %s on host", subnet, route.Dst.String())
 		}
 		return nil
 	})
@@ -28,8 +33,13 @@ func overlaps(n1, n2 *net.IPNet) bool {
 // existing route, because weave-local traffic never hits IP routing.
 func CheckAddressOverlap(addr net.IP, ignoreIfaceNames map[string]struct{}) error {
 	return forEachRoute(ignoreIfaceNames, func(route netlink.Route) error {
+		// ignore 0.0.0.0/0
+    if route.Dst != nil && route.Dst.String() == "0.0.0.0/0" {
+			return nil
+		}
+
 		if route.Dst != nil && route.Dst.Contains(addr) {
-			return fmt.Errorf("Address %s overlaps with existing route %s on host", addr, route.Dst)
+			return fmt.Errorf("Address %s overlaps with existing route %s on host", addr, route.Dst.String())
 		}
 		return nil
 	})
