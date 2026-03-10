@@ -84,6 +84,7 @@ RUN <<EOWEAVER
                   iproute2 \
                   conntrack-tools \
                   bind-tools \
+									iptables-legacy \
                   ca-certificates
 EOWEAVER
 
