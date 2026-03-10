@@ -8,41 +8,6 @@ set -e
 # If this is run from an older manifest, run the init script here
 [ "${INIT_CONTAINER}" = "true" ] || "$(dirname "$0")/init.sh"
 
-# Setup iptables backend to be legacy or nftable
-setup_iptables_backend() {
-    if [ -n "${IPTABLES_BACKEND}" ]; then
-      mode=$IPTABLES_BACKEND
-    else
-      # auto-detect if iptables backend mode to use if not specified explicitly
-      num_legacy_lines=$( (iptables-legacy-save || true) 2>/dev/null | grep '^-' | wc -l)
-      num_nft_lines=$( (iptables-nft-save || true) 2>/dev/null | grep '^-' | wc -l)
-      if [ "${num_legacy_lines}" -ge 10 ]; then
-        mode="legacy"
-      else
-        if [ "${num_legacy_lines}" -ge "${num_nft_lines}" ]; then
-          mode="legacy"
-        else
-          mode="nft"
-        fi
-      fi
-    fi
-    printf "iptables backend mode: %s\n" "$mode"
-    # The weave-kube image uses the iptables-nft tools as default
-    # from weave 2.9.0 onwards, but includes the legacy tools. If
-    # legacy is detected, change the default symlinks.
-    if [ "$mode" = "legacy" ]; then
-      [ -n "$WEAVE_DEBUG" ] && echo "Changing iptables symlinks..."
-      rm /sbin/iptables
-      rm /sbin/iptables-save
-      rm /sbin/iptables-restore
-      ln -s /sbin/iptables-legacy /sbin/iptables
-      ln -s /sbin/iptables-legacy-save /sbin/iptables-save
-      ln -s /sbin/iptables-legacy-restore /sbin/iptables-restore
-    fi
-}
-
-setup_iptables_backend
-
 # Default if not supplied - same as weave net default
 IPALLOC_RANGE=${IPALLOC_RANGE:-10.32.0.0/12}
 HTTP_ADDR=${WEAVE_HTTP_ADDR:-127.0.0.1:6784}

@@ -8,9 +8,7 @@ export CHECKPOINT_DISABLE=1
 
 # Release Version
 SCRIPT_VERSION="unreleased"
-IMAGE_VERSION=3.0.0
-[ "$SCRIPT_VERSION" = "unreleased" ] || IMAGE_VERSION=$SCRIPT_VERSION
-IMAGE_VERSION=${WEAVE_VERSION:-$IMAGE_VERSION}
+IMAGE_VERSION=3.0.2
 
 # Minimum tested version of Docker + Weave Net
 MIN_DOCKER_VERSION=1.27.0
