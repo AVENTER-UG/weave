@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pkg/errors"
 	"github.com/AVENTER-UG/weave/common/chains"
 	"github.com/AVENTER-UG/weave/net/ipset"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	coreapi "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -111,15 +111,15 @@ func (i *mockIPSet) List(prefix string) ([]ipset.Name, error) {
 	return []ipset.Name{}, errors.New("Not Implemented")
 }
 
-type mockIPTables struct {
+type mockNFTables struct {
 	rules map[string]map[string]struct{} // chain -> rulespec -> struct{}
 }
 
-func newMockIPTables() *mockIPTables {
-	return &mockIPTables{rules: make(map[string]map[string]struct{})}
+func newMockNFTables() *mockNFTables {
+	return &mockNFTables{rules: make(map[string]map[string]struct{})}
 }
 
-func (ipt *mockIPTables) Append(table, chain string, rulespec ...string) error {
+func (ipt *mockNFTables) Append(table, chain string, rulespec ...string) error {
 	if table != TableFilter {
 		return fmt.Errorf("invalid table: %q", table)
 	}
@@ -138,7 +138,7 @@ func (ipt *mockIPTables) Append(table, chain string, rulespec ...string) error {
 	return nil
 }
 
-func (ipt *mockIPTables) Delete(table, chain string, rulespec ...string) error {
+func (ipt *mockNFTables) Delete(table, chain string, rulespec ...string) error {
 	rule := strings.Join(rulespec, " ")
 
 	if _, found := ipt.rules[chain][rule]; !found {
@@ -150,7 +150,7 @@ func (ipt *mockIPTables) Delete(table, chain string, rulespec ...string) error {
 	return nil
 }
 
-func (ipt *mockIPTables) Insert(table, chain string, pos int, rulespec ...string) error {
+func (ipt *mockNFTables) Insert(table, chain string, pos int, rulespec ...string) error {
 	return errors.New("Not Implemented")
 }
 
@@ -173,6 +173,10 @@ func TestRegressionPolicyNamespaceOrdering3059(t *testing.T) {
 			Name: "destination",
 			UID:  "destination",
 		},
+	}
+	sourcePod := &coreapi.Pod{
+		ObjectMeta: metav1.ObjectMeta{Name: "source-pod", Namespace: "source", UID: "source-pod"},
+		Status:     coreapi.PodStatus{PodIP: "10.32.0.10", Phase: coreapi.PodRunning},
 	}
 
 	port := intstr.FromInt(12345)
@@ -209,32 +213,34 @@ func TestRegressionPolicyNamespaceOrdering3059(t *testing.T) {
 	m := newMockIPSet()
 	client := fake.NewSimpleClientset()
 	ctx := context.Background()
-	controller := New("foo", newMockIPTables(), &m, client)
+	controller := New("foo", newMockNFTables(), &m, client)
 	client.CoreV1().Namespaces().Create(ctx, sourceNamespace, metav1.CreateOptions{})
 	client.CoreV1().Namespaces().Create(ctx, destinationNamespace, metav1.CreateOptions{})
 
 	const (
 		selectorIPSetName = "weave-I239Zp%sCvoVt*D6u=A!2]YEk"
-		sourceIPSetName   = "weave-HboJG1fGgG]/SR%k9H#hv5e96"
+		sourcePodIP       = "10.32.0.10"
 	)
 
 	controller.AddNamespace(ctx, sourceNamespace)
 	controller.AddNamespace(ctx, destinationNamespace)
+	controller.AddPod(ctx, sourcePod)
 
 	controller.AddNetworkPolicy(ctx, networkPolicy)
 
-	require.Equal(t, true, len(m.sets[selectorIPSetName].subSets[sourceIPSetName]) > 0)
+	require.Equal(t, true, len(m.sets[selectorIPSetName].subSets[sourcePodIP]) > 0)
 
 	// NetworkPolicy first
 	m = newMockIPSet()
-	controller = New("foo", newMockIPTables(), &m, &fake.Clientset{})
+	controller = New("foo", newMockNFTables(), &m, &fake.Clientset{})
 
 	controller.AddNetworkPolicy(ctx, networkPolicy)
 
 	controller.AddNamespace(ctx, sourceNamespace)
 	controller.AddNamespace(ctx, destinationNamespace)
+	controller.AddPod(ctx, sourcePod)
 
-	require.Equal(t, true, len(m.sets[selectorIPSetName].subSets[sourceIPSetName]) > 0)
+	require.Equal(t, true, len(m.sets[selectorIPSetName].subSets[sourcePodIP]) > 0)
 }
 
 // Tests default-allow ipset behavior
@@ -248,7 +254,7 @@ func TestDefaultAllow(t *testing.T) {
 	)
 
 	m := newMockIPSet()
-	controller := New("bar", newMockIPTables(), &m, &fake.Clientset{})
+	controller := New("bar", newMockNFTables(), &m, &fake.Clientset{})
 
 	ctx := context.Background()
 	defaultNamespace := &coreapi.Namespace{
@@ -379,7 +385,7 @@ func TestOutOfOrderPodEvents(t *testing.T) {
 
 	m := newMockIPSet()
 	client := fake.NewSimpleClientset()
-	controller := New("qux", newMockIPTables(), &m, client)
+	controller := New("qux", newMockNFTables(), &m, client)
 	ctx := context.Background()
 
 	defaultNamespace := &coreapi.Namespace{
@@ -465,7 +471,7 @@ func TestNewTargetSelector(t *testing.T) {
 
 	m := newMockIPSet()
 	client := fake.NewSimpleClientset()
-	controller := New("baz", newMockIPTables(), &m, client)
+	controller := New("baz", newMockNFTables(), &m, client)
 	ctx := context.Background()
 
 	defaultNamespace := &coreapi.Namespace{
@@ -543,7 +549,7 @@ func TestEgressPolicyWithIPBlock(t *testing.T) {
 	)
 
 	m := newMockIPSet()
-	ipt := newMockIPTables()
+	ipt := newMockNFTables()
 	client := fake.NewSimpleClientset()
 	controller := New("foo", ipt, &m, client)
 	ctx := context.Background()
@@ -594,7 +600,7 @@ func TestEgressPolicyWithIPBlock(t *testing.T) {
 	require.True(t, m.entriesExist(exceptIPSetName, "192.168.48.1/32"))
 	require.True(t, m.entriesExist(exceptIPSetName, "192.168.48.2/32"))
 
-	// Each egress rule is represented as two iptables rules (-J MARK and -J RETURN).
+	// Each egress rule is represented as two nftables rules (-J MARK and -J RETURN).
 	require.Equal(t, 2, len(ipt.rules[chains.EgressCustomChain]))
 	for rule := range ipt.rules[chains.EgressCustomChain] {
 		require.Contains(t, rule, "-d 192.168.48.0/24 -m set ! --match-set "+exceptIPSetName+" dst")
@@ -641,7 +647,7 @@ func TestIngressPolicyWithIPBlockAndPortSpecified(t *testing.T) {
 	)
 
 	m := newMockIPSet()
-	ipt := newMockIPTables()
+	ipt := newMockNFTables()
 	client := fake.NewSimpleClientset()
 	controller := New("any", ipt, &m, client)
 	ctx := context.Background()

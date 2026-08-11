@@ -1,11 +1,9 @@
 package net
 
 import (
-	"strings"
-	"syscall"
 	"time"
 
-	"github.com/coreos/go-iptables/iptables"
+	"github.com/AVENTER-UG/weave/net/nftables"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	utilwait "k8s.io/apimachinery/pkg/util/wait"
@@ -15,25 +13,24 @@ import (
 //
 // If the chain exists, but its rules are not the same as the given ones, the
 // function will flush the chain and then will append the rules.
-func AddChainWithRules(ipt *iptables.IPTables, table, chain string, rulespecs [][]string) error {
+func AddChainWithRules(ipt *nftables.NFTables, table, chain string, rulespecs [][]string) error {
 	if err := ensureChains(ipt, table, chain); err != nil {
 		return err
 	}
 
 	currRuleSpecs, err := ipt.List(table, chain)
 	if err != nil {
-		return errors.Wrapf(err, "iptables -S. table: %q, chain: %q", table, chain)
+		return errors.Wrapf(err, "list nftables rules; table: %q, chain: %q", table, chain)
 	}
-
-	// First returned rule is "-N $(chain)", so ignore it
-	currRules := strings.Join(currRuleSpecs[1:], "\n")
-	rules := make([]string, 0)
-	for _, r := range rulespecs {
-		rules = append(rules, strings.Join(r, " "))
+	allPresent := len(currRuleSpecs)-1 == len(rulespecs)
+	for _, rule := range rulespecs {
+		exists, err := ipt.Exists(table, chain, rule...)
+		if err != nil {
+			return err
+		}
+		allPresent = allPresent && exists
 	}
-	reqRules := strings.Join(rules, "\n")
-
-	if currRules == reqRules {
+	if allPresent {
 		return nil
 	}
 
@@ -43,7 +40,7 @@ func AddChainWithRules(ipt *iptables.IPTables, table, chain string, rulespecs []
 
 	for _, r := range rulespecs {
 		if err := ipt.Append(table, chain, r...); err != nil {
-			return errors.Wrapf(err, "iptables -A. table: %q, chain: %q, rule: %s", table, chain, r)
+			return errors.Wrapf(err, "append nftables rule; table: %q, chain: %q, rule: %s", table, chain, r)
 		}
 	}
 
@@ -51,7 +48,7 @@ func AddChainWithRules(ipt *iptables.IPTables, table, chain string, rulespecs []
 }
 
 // ensureChains creates given chains if they do not exist.
-func ensureChains(ipt *iptables.IPTables, table string, chains ...string) error {
+func ensureChains(ipt *nftables.NFTables, table string, chains ...string) error {
 	existingChains, err := ipt.ListChains(table)
 	if err != nil {
 		return errors.Wrapf(err, "ipt.ListChains(%s)", table)
@@ -76,7 +73,7 @@ func ensureChains(ipt *iptables.IPTables, table string, chains ...string) error 
 //
 // If any rule from the list is missing, the function deletes all given
 // rules and re-inserts them at the top of the chain to ensure the order of the rules.
-func ensureRulesAtTop(table, chain string, rulespecs [][]string, ipt *iptables.IPTables) error {
+func ensureRulesAtTop(table, chain string, rulespecs [][]string, ipt *nftables.NFTables) error {
 	allFound := true
 
 	for _, rs := range rulespecs {
@@ -109,34 +106,27 @@ func ensureRulesAtTop(table, chain string, rulespecs [][]string, ipt *iptables.I
 	return nil
 }
 
-func chainExists(ipt *iptables.IPTables, table string, chain string) (bool, error) {
-	existingChains, err := ipt.ListChains(table)
+func chainExists(ipt *nftables.NFTables, table string, chain string) (bool, error) {
+	exists, err := ipt.ChainExists(table, chain)
 	if err != nil {
-		return false, errors.Wrapf(err, "ipt.ListChains(%s)", table)
+		return false, errors.Wrapf(err, "nft.ChainExists(%s, %s)", table, chain)
 	}
-	chainMap := make(map[string]struct{})
-	for _, c := range existingChains {
-		chainMap[c] = struct{}{}
-	}
-
-	_, found := chainMap[chain]
-	return found, nil
+	return exists, nil
 }
 
 const (
 	// Max time we wait for an iptables flush to complete after we notice it has started
-	iptablesFlushTimeout = 5 * time.Second
+	nftablesFlushTimeout = 5 * time.Second
 	// How often we poll while waiting for an iptables flush to complete
-	iptablesFlushPollTime = 100 * time.Millisecond
+	nftablesFlushPollTime = 100 * time.Millisecond
 )
 
-// MonitorForIptablesFlush periodically checks for a canary chain in iptables. If this canary chain goes missing it calls the reloadFunc.
-// This is a more efficient way of detecting whether firewalld or another process has been removing rules that we rely on.
+// MonitorForNFTablesFlush checks for a canary chain and restores Weave rules after an external flush.
 // The reloadFunc can then check whether other chains that should exist are still there, fix things and restore the canary.
-func MonitorForIptablesFlush(log *logrus.Logger, canary string, tables []string, reloadFunc func(), interval time.Duration, stopCh <-chan struct{}) {
-	ipt, err := iptables.New()
+func MonitorForNFTablesFlush(log *logrus.Logger, canary string, tables []string, reloadFunc func(), interval time.Duration, stopCh <-chan struct{}) {
+	ipt, err := nftables.New()
 	if err != nil {
-		log.Errorf("creating iptables object while initializing iptable Monitoring %s", err)
+		log.Errorf("creating nftables object while initializing monitoring: %s", err)
 		return
 	}
 
@@ -144,7 +134,7 @@ func MonitorForIptablesFlush(log *logrus.Logger, canary string, tables []string,
 		_ = PollImmediateUntil(interval, func() (bool, error) {
 			for _, table := range tables {
 				if err := ensureChains(ipt, table, canary); err != nil {
-					log.Warningf("Could not set up iptables canary %s/%s: %v", table, canary, err)
+					log.Warningf("Could not set up nftables canary %s/%s: %v", table, canary, err)
 					return false, nil
 				}
 			}
@@ -155,24 +145,24 @@ func MonitorForIptablesFlush(log *logrus.Logger, canary string, tables []string,
 		err = utilwait.PollUntil(interval, func() (bool, error) {
 			if exists, err := chainExists(ipt, tables[0], canary); exists {
 				return false, nil
-			} else if isResourceError(err) {
-				log.Warningf("Could not check for iptables canary %s/%s: %v", tables[0], canary, err)
+			} else if err != nil {
+				log.Warningf("Could not check for nftables canary %s/%s: %v", tables[0], canary, err)
 				return false, nil
 			}
-			log.Infof("iptables canary %s/%s deleted", tables[0], canary)
+			log.Infof("nftables canary %s/%s deleted", tables[0], canary)
 
 			// Wait for the other canaries to be deleted too before returning
 			// so we don't start reloading too soon.
-			err := utilwait.PollImmediate(iptablesFlushPollTime, iptablesFlushTimeout, func() (bool, error) {
+			err := utilwait.PollImmediate(nftablesFlushPollTime, nftablesFlushTimeout, func() (bool, error) {
 				for i := 1; i < len(tables); i++ {
-					if exists, err := chainExists(ipt, tables[i], canary); exists || isResourceError(err) {
+					if exists, err := chainExists(ipt, tables[i], canary); exists || err != nil {
 						return false, nil
 					}
 				}
 				return true, nil
 			})
 			if err != nil {
-				log.Warning("Inconsistent iptables state detected.")
+				log.Warning("Inconsistent nftables state detected.")
 			}
 			return true, nil
 		}, stopCh)
@@ -185,24 +175,9 @@ func MonitorForIptablesFlush(log *logrus.Logger, canary string, tables []string,
 			return
 		}
 
-		log.Infof("Reloading after iptables flush")
+		log.Infof("Reloading after nftables flush")
 		reloadFunc()
 	}
-}
-
-const iptablesStatusResourceProblem = 4
-
-// isResourceError returns true if the error indicates that iptables ran into a "resource
-// problem" and was unable to attempt the request. In particular, this will be true if it
-// times out trying to get the iptables lock.
-func isResourceError(err error) bool {
-	if ierr, ok := err.(*iptables.Error); ok {
-		if status, ok := ierr.ExitError.Sys().(syscall.WaitStatus); ok {
-			return status.ExitStatus() == iptablesStatusResourceProblem
-		}
-	}
-
-	return false
 }
 
 // PollImmediateUntil tries a condition func until it returns true, an error or stopCh is closed.

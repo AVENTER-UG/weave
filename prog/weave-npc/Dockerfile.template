@@ -20,8 +20,7 @@ LABEL works.weave.role="system" \
 CROSS_BUILD_COPY qemu-QEMUARCH-static /usr/bin/
 
 RUN apk add --update \
-    iptables \
-    ipset \
+	nftables \
 	ulogd \
   && rm -rf /var/cache/apk/* \
   && mknod /var/log/ulogd.pcap p

@@ -89,7 +89,7 @@ func (ns *ns) analysePolicy(policy *networkingv1.NetworkPolicy) (
 						addIfNotExist(srcSelector, podSelectors)
 						srcRuleHost = srcSelector
 					} else if peer.NamespaceSelector != nil {
-						srcSelector, err = newSelectorSpec(nil, peer.NamespaceSelector, nil, "", ipset.ListSet)
+						srcSelector, err = newSelectorSpec(nil, peer.NamespaceSelector, nil, "", ipset.HashIP)
 						if err != nil {
 							return nil, nil, nil, nil, nil, err
 						}
@@ -161,7 +161,7 @@ func (ns *ns) analysePolicy(policy *networkingv1.NetworkPolicy) (
 						dstRuleHost = dstSelector
 
 					} else if peer.NamespaceSelector != nil {
-						dstSelector, err = newSelectorSpec(nil, peer.NamespaceSelector, nil, "", ipset.ListSet)
+						dstSelector, err = newSelectorSpec(nil, peer.NamespaceSelector, nil, "", ipset.HashIP)
 						if err != nil {
 							return nil, nil, nil, nil, nil, err
 						}

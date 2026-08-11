@@ -12,7 +12,7 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/coreos/go-iptables/iptables"
+	"github.com/AVENTER-UG/weave/net/nftables"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
@@ -59,7 +59,7 @@ type spiInfo struct {
 
 type IPSec struct {
 	sync.RWMutex
-	ipt *iptables.IPTables
+	ipt *nftables.NFTables
 	log *logrus.Logger
 
 	spiInfo map[spiID]spiInfo
@@ -68,7 +68,7 @@ type IPSec struct {
 }
 
 func New(log *logrus.Logger) (*IPSec, error) {
-	ipt, err := iptables.New()
+	ipt, err := nftables.New()
 	if err != nil {
 		return nil, errors.Wrap(err, "iptables new")
 	}

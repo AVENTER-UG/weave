@@ -1,6 +1,7 @@
 package plugin
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"errors"
@@ -9,13 +10,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/containernetworking/cni/pkg/skel"
-	"github.com/containernetworking/cni/pkg/types"
-	current "github.com/containernetworking/cni/pkg/types/100"
-	"github.com/containernetworking/plugins/pkg/ipam"
 	weaveapi "github.com/AVENTER-UG/weave/api"
 	weavenet "github.com/AVENTER-UG/weave/net"
 	ipamplugin "github.com/AVENTER-UG/weave/plugin/ipam"
+	"github.com/containernetworking/cni/pkg/invoke"
+	"github.com/containernetworking/cni/pkg/skel"
+	"github.com/containernetworking/cni/pkg/types"
+	current "github.com/containernetworking/cni/pkg/types/100"
 	"github.com/vishvananda/netlink"
 	"github.com/vishvananda/netns"
 )
@@ -50,7 +51,7 @@ func (c *CNIPlugin) getIP(ipamType string, args *skel.CmdArgs) (newResult *curre
 	if ipamType == "" {
 		result, err = ipamplugin.NewIpam(c.weave).Allocate(args)
 	} else {
-		result, err = ipam.ExecAdd(ipamType, args.StdinData)
+		result, err = invoke.DelegateAdd(context.TODO(), ipamType, args.StdinData, nil)
 	}
 	if err != nil {
 		return nil, err
@@ -214,7 +215,7 @@ func (c *CNIPlugin) CmdDel(args *skel.CmdArgs) error {
 	if conf.IPAM.Type == "" {
 		err = ipamplugin.NewIpam(c.weave).Release(args)
 	} else {
-		err = ipam.ExecDel(conf.IPAM.Type, args.StdinData)
+		err = invoke.DelegateDel(context.TODO(), conf.IPAM.Type, args.StdinData, nil)
 	}
 	if err != nil {
 		if strings.Contains(err.Error(), fmt.Sprintf("Delete: no addresses for %s", args.ContainerID)) {

@@ -178,7 +178,7 @@ func main() {
 	mflag.BoolVar(&resume, []string{"-resume"}, false, "resume connections to previous peers")
 	mflag.StringVar(&bridgeConfig.WeaveBridgeName, []string{"-weave-bridge"}, "weave", "name of weave bridge")
 	mflag.StringVar(&bridgeConfig.DockerBridgeName, []string{"-docker-bridge"}, "", "name of Docker bridge")
-	mflag.BoolVar(&bridgeConfig.NPC, []string{"-expect-npc"}, false, "set up iptables rules for npc")
+	mflag.BoolVar(&bridgeConfig.NPC, []string{"-expect-npc"}, false, "set up nftables rules for npc")
 	mflag.StringVar(&routerName, []string{"-name"}, "", "name of router (defaults to MAC of interface)")
 	mflag.StringVar(&nickName, []string{"-nickname"}, "", "nickname of peer (defaults to hostname)")
 	mflag.StringVar(&password, []string{"-password"}, "", "network password")
@@ -310,7 +310,7 @@ func main() {
 		}
 	}
 	ips := ipset.New(common.LogLogger(), 0)
-	err = weavenet.ResetIPTables(&bridgeConfig, ips)
+	err = weavenet.ResetNFTables(&bridgeConfig, ips)
 	checkFatal(err)
 	bridgeType, err := weavenet.EnsureBridge(procPath, &bridgeConfig, Log, ips)
 	checkFatal(err)
@@ -515,16 +515,16 @@ func main() {
 		go exposeForAWSVPC(allocator, defaultSubnet, bridgeConfig.WeaveBridgeName, waitReady.Add())
 	}
 
-	applyIPTables := func() {
-		Log.Info("Re-configuring iptables")
-		err := weavenet.ConfigureIPTables(&bridgeConfig, ips)
+	applyNFTables := func() {
+		Log.Info("Re-configuring nftables")
+		err := weavenet.ConfigureNFTables(&bridgeConfig, ips)
 		if err != nil {
-			Log.Errorf("Error configuring iptables: %s", err)
+			Log.Errorf("Error configuring nftables: %s", err)
 		}
 		weavenet.Reexpose(&bridgeConfig, Log)
 	}
 	stopChan := make(chan struct{})
-	go weavenet.MonitorForIptablesFlush(Log, "WEAVE-CANARY", []string{"mangle", "nat", "filter"}, applyIPTables, 10*time.Second, stopChan)
+	go weavenet.MonitorForNFTablesFlush(Log, "WEAVE-CANARY", []string{"mangle", "nat", "filter"}, applyNFTables, 10*time.Second, stopChan)
 	defer close(stopChan)
 
 	signals.SignalHandlerLoop(common.Logging, router)

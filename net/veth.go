@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/coreos/go-iptables/iptables"
+	"github.com/AVENTER-UG/weave/net/nftables"
 	"github.com/j-keck/arping"
 	"github.com/vishvananda/netlink"
 	"github.com/vishvananda/netns"
@@ -170,7 +170,7 @@ func setupIfaceAddrs(veth netlink.Link, withMulticastRoute bool, cidrs []*net.IP
 	}
 
 	ifName := veth.Attrs().Name
-	ipt, err := iptables.New()
+	ipt, err := nftables.New()
 	if err != nil {
 		return err
 	}
@@ -217,7 +217,7 @@ func setupIfaceAddrs(veth netlink.Link, withMulticastRoute bool, cidrs []*net.IP
 
 // setupIface expects to be called in the container's netns
 func setupIface(procPath, ifaceName, newIfName string) error {
-	ipt, err := iptables.New()
+	ipt, err := nftables.New()
 	if err != nil {
 		return err
 	}
@@ -262,7 +262,7 @@ func DetachContainer(netNSPath, id, ifName string, cidrs []*net.IPNet) error {
 	}
 	defer ns.Close()
 
-	ipt, err := iptables.New()
+	ipt, err := nftables.New()
 	if err != nil {
 		return err
 	}

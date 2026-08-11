@@ -47,6 +47,7 @@ var (
 func init() {
 	Log = logrus.New()
 	Log.Formatter = standardTextFormatter
+	Logging = logging.Logrus(Log)
 }
 
 func SetLogLevel(levelname string) {

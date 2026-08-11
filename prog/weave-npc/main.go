@@ -8,7 +8,7 @@ import (
 	goruntime "runtime"
 	"syscall"
 
-	"github.com/coreos/go-iptables/iptables"
+	"github.com/AVENTER-UG/weave/net/nftables"
 	"github.com/spf13/cobra"
 	coreapi "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -54,7 +54,7 @@ func makeController(getter cache.Getter, resource string,
 	return controller
 }
 
-func resetIPTables(ipt *iptables.IPTables) error {
+func resetNFTables(ipt *nftables.NFTables) error {
 	// Flush chains first so there are no refs to extant ipsets
 	if err := ipt.ClearChain(npc.TableFilter, chains.IngressChain); err != nil {
 		return err
@@ -123,7 +123,7 @@ func resetIPSets(ips ipset.Interface) error {
 	return nil
 }
 
-func createBaseRules(ipt *iptables.IPTables, ips ipset.Interface) error {
+func createBaseRules(ipt *nftables.NFTables, ips ipset.Interface) error {
 	// Configure main chain static rules
 	if err := ipt.Append(npc.TableFilter, chains.MainChain,
 		"-m", "state", "--state", "RELATED,ESTABLISHED", "-j", "ACCEPT"); err != nil {
@@ -252,12 +252,12 @@ func root(cmd *cobra.Command, args []string) {
 	client, err := kubernetes.NewForConfig(config)
 	handleFatal(err)
 
-	ipt, err := iptables.New()
+	ipt, err := nftables.New()
 	handleFatal(err)
 
 	ips := ipset.New(common.LogLogger(), maxList)
 
-	handleFatal(resetIPTables(ipt))
+	handleFatal(resetNFTables(ipt))
 	handleFatal(resetIPSets(ips))
 	handleFatal(createBaseRules(ipt, ips))
 

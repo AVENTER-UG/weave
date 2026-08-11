@@ -8,7 +8,7 @@ export CHECKPOINT_DISABLE=1
 
 # Release Version
 SCRIPT_VERSION="unreleased"
-IMAGE_VERSION=3.0.2
+IMAGE_VERSION=4.0.0
 
 # Minimum tested version of Docker + Weave Net
 MIN_DOCKER_VERSION=1.27.0
@@ -24,11 +24,6 @@ PROXY_HOST=${PROXY_HOST:-$(echo "${DOCKER_HOST#tcp://}" | cut -s -d: -f1)}
 PROXY_HOST=${PROXY_HOST:-127.0.0.1}
 DOCKER_CLIENT_HOST=${DOCKER_CLIENT_HOST:-$DOCKER_HOST}
 
-# From weave 2.9.0 onwards, the weave image sets up
-# the iptables-nft backend as default. To use the
-# iptables-legacy backend, the environment variable
-# IPTABLES_BACKEND needs to be set to "legacy"
-IPTABLES_BACKEND=${IPTABLES_BACKEND:-nft}
 
 # Define some regular expressions for matching addresses.
 # The regexp here is far from precise, but good enough.
@@ -320,48 +315,12 @@ fractional_sleep() {
     esac
 }
 
-run_iptables() {
-    # -w is recent addition to iptables
-    if [ -z "$CHECKED_IPTABLES_W" ] ; then
-        iptables -S -w >/dev/null 2>&1 && IPTABLES_W=-w
-        CHECKED_IPTABLES_W=1
-    fi
-
-    # From weave 2.9.0 onwards, the weave image sets up
-    # the iptables-nft backend as default. To use the
-    # iptables-legacy backend, the environment variable
-    # IPTABLES_BACKEND needs to be set to "legacy"
-    if [ "$IPTABLES_BACKEND" = "legacy" ];then
-        iptables-legacy "$IPTABLES_W" "$@"
-    else
-        iptables "$IPTABLES_W" "$@"
-    fi
-
-    
+insert_nftables_rule() {
+    util_op nft-add "$@"
 }
 
-# Insert a rule in iptables, if it doesn't exist already
-insert_iptables_rule() {
-    IPTABLES_TABLE="$1"
-    shift 1
-    if ! run_iptables -t $IPTABLES_TABLE -C "$@" >/dev/null 2>&1 ; then
-        ## Loop until we get an exit code other than "temporarily unavailable"
-        while true ; do
-            run_iptables -t $IPTABLES_TABLE -I "$@" >/dev/null && return 0
-            if [ $? != 4 ] ; then
-                return 1
-            fi
-        done
-    fi
-}
-
-# Delete a rule from iptables, if it exist
-delete_iptables_rule() {
-    IPTABLES_TABLE="$1"
-    shift 1
-    if run_iptables -t $IPTABLES_TABLE -C "$@" >/dev/null 2>&1 ; then
-        run_iptables -t $IPTABLES_TABLE -D "$@" >/dev/null
-    fi
+delete_nftables_rule() {
+    util_op nft-delete "$@"
 }
 
 # Send out an ARP announcement
@@ -387,21 +346,12 @@ util_op() {
         weaveutil "$@"
     else
         docker run --rm --pid host $(docker_run_options) \
-            -e IPTABLES_BACKEND \
             --entrypoint=/usr/bin/weaveutil $EXEC_IMAGE "$@"
     fi
 }
 
 check_forwarding_rules() {
-    if run_iptables -C FORWARD -j REJECT --reject-with icmp-host-prohibited > /dev/null 2>&1; then
-        cat >&2 <<EOF
-WARNING: existing iptables rule
-
-    '-A FORWARD -j REJECT --reject-with icmp-host-prohibited'
-
-will block name resolution via weaveDNS - please reconfigure your firewall.
-EOF
-    fi
+    : # Weave owns a dedicated nftables table and does not inspect unrelated rules.
 }
 
 # Detect the current bridge/datapath state. When invoked, the values of
@@ -500,49 +450,9 @@ destroy_bridge() {
         ip link del $VETH >/dev/null 2>&1 || true
     done
 
-    if [ "$DOCKER_BRIDGE" != "$BRIDGE" ] ; then
-        run_iptables -t filter -D FORWARD -i $DOCKER_BRIDGE -o $BRIDGE -j DROP 2>/dev/null || true
-    fi
-
-    [ -n "$DOCKER_BRIDGE_IP" ] || DOCKER_BRIDGE_IP=$(util_op bridge-ip $DOCKER_BRIDGE)
-
-    run_iptables -t filter -D INPUT -d 127.0.0.1/32 -p tcp --dport 6784 -m addrtype ! --src-type LOCAL -m conntrack ! --ctstate RELATED,ESTABLISHED -m comment --comment "Block non-local access to Weave Net control port" -j DROP >/dev/null 2>&1 || true
-    run_iptables -t filter -D INPUT -i $DOCKER_BRIDGE -p udp --dport 53  -j ACCEPT  >/dev/null 2>&1 || true
-    run_iptables -t filter -D INPUT -i $DOCKER_BRIDGE -p tcp --dport 53  -j ACCEPT  >/dev/null 2>&1 || true
-
-    run_iptables -t filter -D INPUT -i $DOCKER_BRIDGE -p tcp --dst $DOCKER_BRIDGE_IP --dport $PORT          -j DROP >/dev/null 2>&1 || true
-    run_iptables -t filter -D INPUT -i $DOCKER_BRIDGE -p udp --dst $DOCKER_BRIDGE_IP --dport $PORT          -j DROP >/dev/null 2>&1 || true
-    run_iptables -t filter -D INPUT -i $DOCKER_BRIDGE -p udp --dst $DOCKER_BRIDGE_IP --dport $(($PORT + 1)) -j DROP >/dev/null 2>&1 || true
-
-    run_iptables -t filter -D FORWARD -i $BRIDGE ! -o $BRIDGE -j ACCEPT 2>/dev/null || true
-    run_iptables -t filter -D FORWARD -o $BRIDGE -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT 2>/dev/null || true
-    run_iptables -t filter -D FORWARD -i $BRIDGE -o $BRIDGE -j ACCEPT 2>/dev/null || true
-    run_iptables -F WEAVE-NPC >/dev/null 2>&1 || true
-    run_iptables -t filter -D FORWARD -o $BRIDGE -m comment --comment "NOTE: this must go before '-j KUBE-FORWARD'" -j WEAVE-NPC 2>/dev/null || true
-    run_iptables -t filter -D FORWARD -o $BRIDGE -m state --state NEW -j NFLOG --nflog-group 86 2>/dev/null || true
-    run_iptables -t filter -D FORWARD -o $BRIDGE -j DROP 2>/dev/null || true
-    run_iptables -X WEAVE-NPC >/dev/null 2>&1 || true
-    run_iptables -F WEAVE-NPC-EGRESS >/dev/null 2>&1 || true
-    run_iptables -t filter -D FORWARD -i $BRIDGE -m comment --comment "NOTE: this must go before '-j KUBE-FORWARD'" -j WEAVE-NPC-EGRESS 2>/dev/null || true
-    run_iptables -t filter -D INPUT -i $BRIDGE -j WEAVE-NPC-EGRESS 2>/dev/null || true
-    run_iptables -X WEAVE-NPC-EGRESS >/dev/null 2>&1 || true
-    run_iptables -F WEAVE-NPC-EGRESS-DEFAULT >/dev/null 2>&1 || true
-    run_iptables -X WEAVE-NPC-EGRESS-DEFAULT >/dev/null 2>&1 || true
-    run_iptables -F WEAVE-NPC-EGRESS-CUSTOM >/dev/null 2>&1 || true
-    run_iptables -X WEAVE-NPC-EGRESS-CUSTOM >/dev/null 2>&1 || true
-    run_iptables -F WEAVE-NPC-EGRESS-ACCEPT >/dev/null 2>&1 || true
-    run_iptables -X WEAVE-NPC-EGRESS-ACCEPT >/dev/null 2>&1 || true
-
-    run_iptables -F WEAVE-EXPOSE >/dev/null 2>&1 || true
-    run_iptables -t filter -D FORWARD -o $BRIDGE -j WEAVE-EXPOSE 2>/dev/null || true
-    run_iptables -X WEAVE-EXPOSE >/dev/null 2>&1 || true
-
-    run_iptables -t nat -F WEAVE >/dev/null 2>&1 || true
-    run_iptables -t nat -D POSTROUTING -j WEAVE >/dev/null 2>&1 || true
-    run_iptables -t nat -D POSTROUTING -o $BRIDGE -j ACCEPT >/dev/null 2>&1 || true
-    run_iptables -t nat -X WEAVE >/dev/null 2>&1 || true
-
-    ipset destroy weaver-no-masq-local >/dev/null 2>&1 || true
+    # All Weave rules and sets live in a dedicated table, so reset is atomic and
+    # cannot remove firewall state owned by Kubernetes, Docker, or the host.
+    util_op nft-destroy >/dev/null 2>&1 || true
 }
 
 add_iface_fastdp() {
@@ -1317,7 +1227,7 @@ case "$COMMAND" in
     attach-bridge)
         if detect_bridge_type ; then
             attach_bridge ${1:-$DOCKER_BRIDGE}
-            insert_iptables_rule nat POSTROUTING -o $BRIDGE -j ACCEPT
+            insert_nftables_rule nat POSTROUTING -o $BRIDGE -j ACCEPT
         else
             echo "Weave bridge not found. Please run 'weave launch' and try again" >&2
             exit 1
@@ -1504,9 +1414,9 @@ case "$COMMAND" in
         for CIDR in $ALL_CIDRS ; do
             if ip addr show dev $BRIDGE | grep -qF $CIDR ; then
                 ip addr del dev $BRIDGE $CIDR
-                delete_iptables_rule nat WEAVE -d $CIDR ! -s $CIDR -j MASQUERADE
-                delete_iptables_rule nat WEAVE -s $CIDR ! -d $CIDR -j MASQUERADE
-                delete_iptables_rule filter WEAVE-EXPOSE -d $CIDR -j ACCEPT
+                delete_nftables_rule nat WEAVE -d $CIDR ! -s $CIDR -j MASQUERADE
+                delete_nftables_rule nat WEAVE -s $CIDR ! -d $CIDR -j MASQUERADE
+                delete_nftables_rule filter WEAVE-EXPOSE -d $CIDR -j ACCEPT
                 when_weave_running delete_dns weave:expose $CIDR
             fi
         done

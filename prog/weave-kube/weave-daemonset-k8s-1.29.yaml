@@ -134,9 +134,6 @@ items:
                   mountPath: /host/etc
                 - name: lib-modules
                   mountPath: /lib/modules
-                - name: xtables-lock
-                  mountPath: /run/xtables.lock
-                  readOnly: false
           containers:
             - name: weave
               command:
@@ -171,9 +168,6 @@ items:
                 - mountPath: /host/etc/machine-id
                   name: cni-machine-id
                   readOnly: true
-                - name: xtables-lock
-                  mountPath: /run/xtables.lock
-                  readOnly: false
             - name: weave-npc
               env:
                 - name: HOSTNAME
@@ -188,9 +182,6 @@ items:
               securityContext:
                 privileged: true
               volumeMounts:
-                - name: xtables-lock
-                  mountPath: /run/xtables.lock
-                  readOnly: false
           hostNetwork: true
           dnsPolicy: ClusterFirstWithHostNet
           hostPID: false
@@ -225,10 +216,6 @@ items:
             - name: lib-modules
               hostPath:
                 path: /lib/modules
-            - name: xtables-lock
-              hostPath:
-                path: /run/xtables.lock
-                type: FileOrCreate
           priorityClassName: system-node-critical
       updateStrategy:
         type: RollingUpdate
