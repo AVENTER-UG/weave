@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/coreos/go-iptables/iptables"
+	"github.com/AVENTER-UG/weave/net/nftables"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
@@ -260,8 +260,8 @@ func EnsureBridge(procPath string, config *BridgeConfig, log *logrus.Logger, ips
 		break
 	}
 
-	if err := ConfigureIPTables(config, ips); err != nil {
-		return bridgeType, errors.Wrap(err, "configuring iptables")
+	if err := ConfigureNFTables(config, ips); err != nil {
+		return bridgeType, errors.Wrap(err, "configuring nftables")
 	}
 
 	if config.AWSVPC {
@@ -427,11 +427,11 @@ func (f fastdpImpl) attach(veth *netlink.Veth) error {
 	return odp.AddDatapathInterfaceIfNotExist(f.datapathName, veth.Attrs().Name)
 }
 
-// ResetIPTables resets IPTables in case they're in a strange state from a previous run.
-func ResetIPTables(config *BridgeConfig, ips ipset.Interface) error {
-	ipt, err := iptables.New()
+// ResetNFTables resets Weave's nftables state from a previous run.
+func ResetNFTables(config *BridgeConfig, ips ipset.Interface) error {
+	ipt, err := nftables.New()
 	if err != nil {
-		return errors.Wrap(err, "creating iptables object while resetting")
+		return errors.Wrap(err, "creating nftables object while resetting")
 	}
 
 	if !config.NPC {
@@ -456,11 +456,11 @@ func ResetIPTables(config *BridgeConfig, ips ipset.Interface) error {
 	return nil
 }
 
-// ConfigureIPTables idempotently configures all the iptables!
-func ConfigureIPTables(config *BridgeConfig, ips ipset.Interface) error {
-	ipt, err := iptables.New()
+// ConfigureNFTables idempotently configures Weave's nftables rules.
+func ConfigureNFTables(config *BridgeConfig, ips ipset.Interface) error {
+	ipt, err := nftables.New()
 	if err != nil {
-		return errors.Wrap(err, "creating iptables object while configuring")
+		return errors.Wrap(err, "creating nftables object while configuring")
 	}
 
 	// The order among weave filter/FORWARD rules is important!
@@ -566,9 +566,9 @@ func ConfigureIPTables(config *BridgeConfig, ips ipset.Interface) error {
 	}
 
 	// For the cases where the weave bridge is the default gateway for
-	// containers (e.g. Kubernetes): In `ResetIPTables` (which we assume
+	// containers (e.g. Kubernetes): In `ResetNFTables` (which we assume
 	// to have been called at this point) we create an ipset to store CIDRs
-	// allocated by IPAM for local containers.
+	// allocated by IPAM for local containers in a native nftables set.
 	// In the case of Kubernetes, external traffic sent to these CIDRs
 	// avoids SNAT'ing so that NodePort with `"externalTrafficPolicy":"Local"`
 	// would receive packets with correct src IP addr.

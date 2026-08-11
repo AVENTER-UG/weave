@@ -79,12 +79,10 @@ RUN <<EOWEAVER
       apk add --update \
 									libpcap \
                   curl \
-                  iptables \
-                  ipset \
+                  nftables \
                   iproute2 \
                   conntrack-tools \
                   bind-tools \
-									iptables-legacy \
                   ca-certificates
 EOWEAVER
 
@@ -168,19 +166,9 @@ LABEL works.weave.role="system" \
 
 RUN <<EONPC
       apk add --update \
-                  iptables \
-                  ipset \
+                  nftables \
                   ulogd
       mknod /var/log/ulogd.pcap p
-      
-      # Alpine 3.19 made nftables the default backend for iptables
-      # From weave version 2.9.0 onwards, weave will also assume 
-      # the same, but will include iptables-legacy for backward
-      # compatibility.
-      apk add iptables-legacy
-      # ln -sf /sbin/iptables-legacy /sbin/iptables
-      # ln -sf /sbin/iptables-legacy-save /sbin/iptables-save
-      # ln -sf /sbin/iptables-legacy-restore /sbin/iptables-restore
 
       rm -rf /var/cache/apk/*
 EONPC
@@ -239,7 +227,7 @@ LABEL org.opencontainers.image.revision="${revision}" \
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM --platform=linux/${TARGETARCH} bash AS networktesterimage
+FROM --platform=linux/${TARGETARCH} ${ALPINE_BASEIMAGE} AS networktesterimage
 RUN apk add --no-cache curl bind-tools
 COPY --from=builder /root/weave/test/images/network-tester/webserver webserver
 EXPOSE 8080

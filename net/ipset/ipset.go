@@ -1,21 +1,16 @@
 package ipset
 
 import (
-	"crypto/rand"
-	"encoding/hex"
+	"context"
 	"fmt"
 	"log"
-	"os/exec"
 	"strings"
-	"time"
 
-	"github.com/pkg/errors"
+	knftables "sigs.k8s.io/knftables"
 )
 
 type Name string
-
 type Type string
-
 type UID string
 
 const (
@@ -23,7 +18,7 @@ const (
 	HashIP  = Type("hash:ip")
 	HashNet = Type("hash:net")
 
-	DestroyRetrySleepMs = 100
+	nftTableName = "weave"
 )
 
 type Interface interface {
@@ -34,9 +29,7 @@ type Interface interface {
 	Exists(ipsetName Name) (bool, error)
 	Flush(ipsetName Name) error
 	Destroy(ipsetName Name) error
-
 	List(prefix string) ([]Name, error)
-
 	FlushAll() error
 	DestroyAll() error
 }
@@ -48,96 +41,136 @@ type entryKey struct {
 
 type ipset struct {
 	*log.Logger
-	enableComments bool
-	maxListSize    int
-	// List of users per ipset entry. User is either a namespace or a pod.
-	// There might be multiple users for the same ipset & entry pair because
-	// events from k8s API server might be out of order causing duplicate IPs:
-	// https://github.com/AVENTER-UG/weave/issues/2792.
-	users map[entryKey]map[UID]struct{}
+	maxListSize int
+	users       map[entryKey]map[UID]struct{}
+	nft         knftables.Interface
+	initErr     error
 }
 
 func New(logger *log.Logger, maxListSize int) Interface {
-	ips := &ipset{
-		Logger:         logger,
-		enableComments: true,
-		maxListSize:    maxListSize,
-		users:          make(map[entryKey]map[UID]struct{}),
+	nft, err := knftables.New(knftables.InetFamily, nftTableName)
+	if err != nil {
+		return &ipset{Logger: logger, maxListSize: maxListSize, users: make(map[entryKey]map[UID]struct{}), initErr: err}
 	}
+	return newWithInterface(logger, maxListSize, nft)
+}
 
-	// Check for comment support
-
-	// To prevent from a race when more than one process check for the support
-	// we append a random nonce to the test ipset name. The final name is
-	// shorter than 31 chars (max ipset name).
-	nonce := make([]byte, 4)
-	rand.Read(nonce)
-	testIpsetName := Name("weave-test-comment" + hex.EncodeToString(nonce))
-
-	// Clear it out if it already exists
-	_ = ips.Destroy(testIpsetName)
-	// Test for comment support
-	if err := ips.Create(testIpsetName, HashIP); err != nil {
-		ips.Logger.Printf("failed to create %s; disabling comment support", testIpsetName)
-		ips.enableComments = false
+func newWithInterface(logger *log.Logger, maxListSize int, nft knftables.Interface) Interface {
+	return &ipset{
+		Logger:      logger,
+		maxListSize: maxListSize,
+		users:       make(map[entryKey]map[UID]struct{}),
+		nft:         nft,
 	}
-	// If it was created, destroy it
-	_ = ips.Destroy(testIpsetName)
+}
 
-	return ips
+func nftSetName(name Name) string {
+	var sanitized strings.Builder
+	sanitized.Grow(len(name))
+	for _, character := range name {
+		switch {
+		case character >= 'a' && character <= 'z',
+			character >= 'A' && character <= 'Z',
+			character >= '0' && character <= '9',
+			character == '_':
+			sanitized.WriteRune(character)
+		default:
+			sanitized.WriteByte('_')
+		}
+	}
+	return sanitized.String()
+}
+
+func (i *ipset) ready() error {
+	if i.initErr != nil {
+		return fmt.Errorf("initialize nftables sets: %w", i.initErr)
+	}
+	tx := i.nft.NewTransaction()
+	tx.Add(&knftables.Table{})
+	if err := i.nft.Run(context.Background(), tx); err != nil && !knftables.IsAlreadyExists(err) {
+		return fmt.Errorf("create nftables table: %w", err)
+	}
+	return nil
 }
 
 func (i *ipset) Create(ipsetName Name, ipsetType Type) error {
-	args := []string{"create", string(ipsetName), string(ipsetType)}
-	if ipsetType == ListSet && i.maxListSize > 0 {
-		args = append(args, "size", fmt.Sprintf("%d", i.maxListSize))
+	if ipsetType == ListSet {
+		return fmt.Errorf("nftables does not support nested %q sets; namespace selectors must contain pod IPs directly", ListSet)
 	}
-	if i.enableComments {
-		args = append(args, "comment")
+	if ipsetType != HashIP && ipsetType != HashNet {
+		return fmt.Errorf("unsupported nftables set type %q", ipsetType)
 	}
-	return doExec(args...)
+	if err := i.ready(); err != nil {
+		return err
+	}
+	exists, err := i.Exists(ipsetName)
+	if err != nil || exists {
+		return err
+	}
+	set := &knftables.Set{Name: nftSetName(ipsetName), Type: "ipv4_addr"}
+	if ipsetType == HashNet {
+		set.Flags = []knftables.SetFlag{knftables.IntervalFlag}
+		autoMerge := true
+		set.AutoMerge = &autoMerge
+	}
+	if i.maxListSize > 0 {
+		size := uint64(i.maxListSize)
+		set.Size = &size
+	}
+	tx := i.nft.NewTransaction()
+	tx.Create(set)
+	if err := i.nft.Run(context.Background(), tx); err != nil && !knftables.IsAlreadyExists(err) {
+		return fmt.Errorf("create nftables set %s: %w", ipsetName, err)
+	}
+	return nil
 }
 
 func (i *ipset) AddEntry(user UID, ipsetName Name, entry string, comment string) error {
-	i.Logger.Printf("adding entry %s to %s of %s", entry, ipsetName, user)
-
-	if !i.addUser(user, ipsetName, entry) { // already in the set
+	i.Logger.Printf("adding entry %s to %s for %s", entry, ipsetName, user)
+	if !i.addUser(user, ipsetName, entry) {
 		return nil
 	}
-
-	i.Logger.Printf("added entry %s to %s of %s", entry, ipsetName, user)
-
-	args := []string{"add", string(ipsetName), entry}
-	if i.enableComments {
-		args = append(args, "comment", comment)
+	element := &knftables.Element{Set: nftSetName(ipsetName), Key: []string{entry}}
+	if comment != "" {
+		element.Comment = &comment
 	}
-	return doExec(args...)
+	tx := i.nft.NewTransaction()
+	tx.Add(element)
+	if err := i.nft.Run(context.Background(), tx); err != nil {
+		i.delUser(user, ipsetName, entry)
+		return fmt.Errorf("add %s to nftables set %s: %w", entry, ipsetName, err)
+	}
+	return nil
 }
 
 func (i *ipset) DelEntry(user UID, ipsetName Name, entry string) error {
-	i.Logger.Printf("deleting entry %s from %s of %s", entry, ipsetName, user)
-
-	if !i.delUser(user, ipsetName, entry) { // still needed
+	i.Logger.Printf("deleting entry %s from %s for %s", entry, ipsetName, user)
+	if !i.delUser(user, ipsetName, entry) {
 		return nil
 	}
-
-	i.Logger.Printf("deleted entry %s from %s of %s", entry, ipsetName, user)
-
-	return doExec("del", string(ipsetName), entry)
+	tx := i.nft.NewTransaction()
+	tx.Delete(&knftables.Element{Set: nftSetName(ipsetName), Key: []string{entry}})
+	if err := i.nft.Run(context.Background(), tx); err != nil && !knftables.IsNotFound(err) {
+		return fmt.Errorf("delete %s from nftables set %s: %w", entry, ipsetName, err)
+	}
+	return nil
 }
 
 func (i *ipset) EntryExists(user UID, ipsetName Name, entry string) bool {
 	return i.existUser(user, ipsetName, entry)
 }
 
-// Dummy way to check whether a given ipset exists.
 func (i *ipset) Exists(name Name) (bool, error) {
-	sets, err := i.List(string(name))
+	sets, err := i.nft.List(context.Background(), "set")
 	if err != nil {
+		if knftables.IsNotFound(err) {
+			return false, nil
+		}
 		return false, err
 	}
-	for _, s := range sets {
-		if s == name {
+	wanted := nftSetName(name)
+	for _, set := range sets {
+		if set == wanted {
 			return true, nil
 		}
 	}
@@ -146,80 +179,90 @@ func (i *ipset) Exists(name Name) (bool, error) {
 
 func (i *ipset) Flush(ipsetName Name) error {
 	i.removeSetFromUsers(ipsetName)
-	return doExec("flush", string(ipsetName))
-}
-
-func (i *ipset) FlushAll() error {
-	i.users = make(map[entryKey]map[UID]struct{})
-	return doExec("flush")
+	tx := i.nft.NewTransaction()
+	tx.Flush(&knftables.Set{Name: nftSetName(ipsetName)})
+	if err := i.nft.Run(context.Background(), tx); err != nil && !knftables.IsNotFound(err) {
+		return err
+	}
+	return nil
 }
 
 func (i *ipset) Destroy(ipsetName Name) error {
 	i.removeSetFromUsers(ipsetName)
-	err := doExec("destroy", string(ipsetName))
-	if err != nil {
-		time.Sleep(DestroyRetrySleepMs * time.Millisecond)
-		return doExec("destroy", string(ipsetName))
+	tx := i.nft.NewTransaction()
+	tx.Destroy(&knftables.Set{Name: nftSetName(ipsetName)})
+	if err := i.nft.Run(context.Background(), tx); err != nil && !knftables.IsNotFound(err) {
+		return err
 	}
-	return err
+	return nil
+}
+
+func (i *ipset) List(prefix string) ([]Name, error) {
+	sets, err := i.nft.List(context.Background(), "set")
+	if err != nil {
+		if knftables.IsNotFound(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	normalizedPrefix := nftSetName(Name(prefix))
+	selected := make([]Name, 0)
+	for _, set := range sets {
+		if strings.HasPrefix(set, normalizedPrefix) {
+			selected = append(selected, Name(set))
+		}
+	}
+	return selected, nil
+}
+
+func (i *ipset) FlushAll() error {
+	sets, err := i.List("")
+	if err != nil {
+		return err
+	}
+	for _, set := range sets {
+		if err := i.Flush(set); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (i *ipset) DestroyAll() error {
-	i.users = make(map[entryKey]map[UID]struct{})
-	err := doExec("destroy")
+	sets, err := i.List("")
 	if err != nil {
-		time.Sleep(DestroyRetrySleepMs * time.Millisecond)
-		return doExec("destroy")
+		return err
 	}
-	return err
-}
-
-// Fetch a list of all existing sets with a given prefix
-func (i *ipset) List(prefix string) ([]Name, error) {
-	output, err := exec.Command("ipset", "list", "-name", "-output", "plain").Output()
-	if err != nil {
-		return nil, err
-	}
-
-	var selected []Name
-	sets := strings.Split(string(output), "\n")
-	for _, v := range sets {
-		if strings.HasPrefix(v, prefix) {
-			selected = append(selected, Name(v))
+	for _, set := range sets {
+		if err := i.Destroy(set); err != nil {
+			return err
 		}
 	}
-
-	return selected, err
+	return nil
 }
 
-// Returns true if entry does not exist in ipset (entry has to be inserted into ipset).
 func (i *ipset) addUser(user UID, ipsetName Name, entry string) bool {
-	k := entryKey{ipsetName, entry}
-	add := false
-
-	if i.users[k] == nil {
-		i.users[k] = make(map[UID]struct{})
+	key := entryKey{ipsetName, entry}
+	if i.users[key] == nil {
+		i.users[key] = make(map[UID]struct{})
 	}
-	if len(i.users[k]) == 0 {
-		add = true
-	}
-	i.users[k][user] = struct{}{}
-
+	add := len(i.users[key]) == 0
+	i.users[key][user] = struct{}{}
 	return add
 }
 
-// Returns true if user is the last owner of entry (entry has to be removed from ipset).
 func (i *ipset) delUser(user UID, ipsetName Name, entry string) bool {
-	k := entryKey{ipsetName, entry}
-
-	oneLeft := len(i.users[k]) == 1
-	delete(i.users[k], user)
-
-	if len(i.users[k]) == 0 {
-		delete(i.users, k)
+	key := entryKey{ipsetName, entry}
+	owners := i.users[key]
+	if _, found := owners[user]; !found {
+		return false
 	}
-
-	return oneLeft && (len(i.users[k]) == 0)
+	delete(owners, user)
+	if len(owners) != 0 {
+		return false
+	}
+	delete(i.users, key)
+	return true
 }
 
 func (i *ipset) existUser(user UID, ipsetName Name, entry string) bool {
@@ -228,16 +271,9 @@ func (i *ipset) existUser(user UID, ipsetName Name, entry string) bool {
 }
 
 func (i *ipset) removeSetFromUsers(ipsetName Name) {
-	for k := range i.users {
-		if k.ipsetName == ipsetName {
-			delete(i.users, k)
+	for key := range i.users {
+		if key.ipsetName == ipsetName {
+			delete(i.users, key)
 		}
 	}
-}
-
-func doExec(args ...string) error {
-	if output, err := exec.Command("ipset", args...).CombinedOutput(); err != nil {
-		return errors.Wrapf(err, "ipset %v failed: %s", args, output)
-	}
-	return nil
 }

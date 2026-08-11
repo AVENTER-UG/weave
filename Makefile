@@ -1,4 +1,4 @@
-IMAGE_VERSION = 3.0.2
+IMAGE_VERSION = 4.0.0
 ALPINE_BASEIMAGE = alpine:3.23
 
 .PHONY: build push

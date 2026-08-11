@@ -4,7 +4,7 @@ import (
 	"net"
 	"syscall"
 
-	"github.com/coreos/go-iptables/iptables"
+	"github.com/AVENTER-UG/weave/net/nftables"
 	"github.com/j-keck/arping"
 	"github.com/pkg/errors"
 	"github.com/vishvananda/netlink"
@@ -18,11 +18,11 @@ import (
 // * "ipAddr" - IP addr to be assigned to the bridge.
 // * "removeDefaultRoute" - whether to remove a default route installed by the kernel (used only in the AWSVPC mode).
 // * "npc" - whether is Weave NPC running.
-// * "skipNAT" - whether to skip adding iptables NAT rules
+// * "skipNAT" - whether to skip adding nftables NAT rules
 func Expose(bridgeName string, ipAddr *net.IPNet, removeDefaultRoute, npc bool, skipNAT bool) error {
-	ipt, err := iptables.New()
+	ipt, err := nftables.New()
 	if err != nil {
-		return errors.Wrap(err, "iptables.New")
+		return errors.Wrap(err, "nftables.New")
 	}
 	cidr := ipAddr.String()
 
@@ -89,7 +89,7 @@ func addBridgeIPAddr(bridgeName string, addr *net.IPNet, removeDefaultRoute bool
 	return nil
 }
 
-func exposeNAT(ipt *iptables.IPTables, cidr string) error {
+func exposeNAT(ipt *nftables.NFTables, cidr string) error {
 	if err := addNatRule(ipt, "-s", cidr, "-d", "224.0.0.0/4", "-j", "RETURN"); err != nil {
 		return err
 	}
@@ -99,15 +99,6 @@ func exposeNAT(ipt *iptables.IPTables, cidr string) error {
 	return addNatRule(ipt, "-s", cidr, "!", "-d", cidr, "-j", "MASQUERADE")
 }
 
-func addNatRule(ipt *iptables.IPTables, rulespec ...string) error {
-	// Loop until we get an exit code other than "temporarily unavailable"
-	for {
-		if err := ipt.AppendUnique("nat", "WEAVE", rulespec...); err != nil {
-			if isResourceError(err) {
-				continue
-			}
-			return err
-		}
-		return nil
-	}
+func addNatRule(ipt *nftables.NFTables, rulespec ...string) error {
+	return ipt.AppendUnique("nat", "WEAVE", rulespec...)
 }

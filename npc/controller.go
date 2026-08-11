@@ -15,7 +15,7 @@ import (
 	"github.com/AVENTER-UG/weave/common"
 	"github.com/AVENTER-UG/weave/common/chains"
 	"github.com/AVENTER-UG/weave/net/ipset"
-	"github.com/AVENTER-UG/weave/npc/iptables"
+	"github.com/AVENTER-UG/weave/npc/nftables"
 )
 
 type NetworkPolicyController interface {
@@ -37,7 +37,7 @@ type controller struct {
 
 	nodeName string // my node name
 
-	ipt                    iptables.Interface
+	ipt                    nftables.Interface
 	ips                    ipset.Interface
 	clientset              kubernetes.Interface
 	nss                    map[string]*ns // ns name -> ns struct
@@ -46,7 +46,7 @@ type controller struct {
 	defaultEgressDrop      bool // flag to track if base iptable rule to drop egress traffic is added or not
 }
 
-func New(nodeName string, ipt iptables.Interface, ips ipset.Interface, clientset kubernetes.Interface) NetworkPolicyController {
+func New(nodeName string, ipt nftables.Interface, ips ipset.Interface, clientset kubernetes.Interface) NetworkPolicyController {
 	c := &controller{
 		nodeName:  nodeName,
 		ipt:       ipt,
@@ -64,8 +64,12 @@ func (npc *controller) onNewNsSelector(selector *selector) error {
 	for _, ns := range npc.nss {
 		if ns.namespaceUID != "" {
 			if selector.matchesNamespaceSelector(ns.namespaceLabels) {
-				if err := selector.addEntry(ns.namespaceUID, string(ns.allPods.ipsetName), namespaceComment(ns)); err != nil {
-					return err
+				for _, pod := range ns.pods {
+					if hasIP(pod) {
+						if err := selector.addEntry(uid(pod), pod.Status.PodIP, podComment(pod)); err != nil {
+							return err
+						}
+					}
 				}
 			}
 		}

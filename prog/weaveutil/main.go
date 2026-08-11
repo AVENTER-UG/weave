@@ -41,6 +41,9 @@ func init() {
 		"rewrite-etc-hosts":        rewriteEtcHosts,
 		"get-db-flag":              getDBFlag,
 		"set-db-flag":              setDBFlag,
+		"nft-add":                  nftAdd,
+		"nft-delete":               nftDelete,
+		"nft-destroy":              nftDestroy,
 	}
 }
 

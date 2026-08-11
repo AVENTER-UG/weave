@@ -8,7 +8,7 @@ import (
 	"github.com/AVENTER-UG/weave/common"
 	"github.com/AVENTER-UG/weave/common/chains"
 	"github.com/AVENTER-UG/weave/net/ipset"
-	"github.com/AVENTER-UG/weave/npc/iptables"
+	"github.com/AVENTER-UG/weave/npc/nftables"
 )
 
 type ruleHost interface {
@@ -79,11 +79,11 @@ func (spec *ruleSpec) iptRuleSpecs() [][]string {
 }
 
 type ruleSet struct {
-	ipt   iptables.Interface
+	ipt   nftables.Interface
 	users map[string]map[ipset.UID]struct{}
 }
 
-func newRuleSet(ipt iptables.Interface) *ruleSet {
+func newRuleSet(ipt nftables.Interface) *ruleSet {
 	return &ruleSet{ipt, make(map[string]map[ipset.UID]struct{})}
 }
 

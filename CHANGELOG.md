@@ -1,3 +1,10 @@
+## Release 4.0.0
+
+This major release replaces Weave's iptables and ipset firewall implementation
+with native nftables rules and sets. Docker images no longer install iptables,
+iptables-legacy, or ipset. The Go dependency graph is guarded by a unit test to
+prevent reintroducing go-iptables.
+
 ## Release 3.0.2
 
 - FIX: do not check Address and Network overlaps with 0.0.0.0/0.
